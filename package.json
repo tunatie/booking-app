@@ -1,0 +1,25 @@
+{
+  "name": "bookingapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix API\" \"npm run dev --prefix client\"",
+    "start": "node API/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.6",
+    "crypto": "^1.0.1",
+    "image-downloader": "^4.3.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.1",
+    "react": "^18.0.0",
+    "react-datepicker": "^8.2.1",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
