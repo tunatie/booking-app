@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from 'axios';
-import { useProgress } from "../HostLayout";
+import axios from '../utils/axios';
+import { useProgress } from "../contexts/ProgressContext";
 import HeaderActions from "../components/HeaderActions";
 import { getNextPage, getPreviousPage, getPageProgress } from "../utils/pageOrder";
+import ToggleSwitch from '../components/ToggleSwitch';
 
 export default function BookingSettingsPage() {
     const { setProgress } = useProgress();

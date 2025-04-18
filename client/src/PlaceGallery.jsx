@@ -1,4 +1,5 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import { API_BASE_URL } from './config'; // Corrected import path
 
 export default function PlaceGallery({place}){
     const [showAllPhotos,setShowAllPhotos] = useState(false);
@@ -26,7 +27,7 @@ export default function PlaceGallery({place}){
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                             </svg>
                         </button>
-                        <img src={`http://localhost:4000/uploads/${place.photos[currentPhoto]}`} 
+                        <img src={`${API_BASE_URL}/uploads/${place.photos[currentPhoto]}`} 
                              alt="" 
                              className="max-h-full max-w-full object-contain"/>
                         <button onClick={() => setCurrentPhoto((prev) => (prev < place.photos.length - 1 ? prev + 1 : 0))}
@@ -63,7 +64,7 @@ export default function PlaceGallery({place}){
                                      setCurrentPhoto(index);
                                      setShowCarousel(true);
                                  }}>
-                                <img src={`http://localhost:4000/uploads/${photo}`} 
+                                <img src={`${API_BASE_URL}/uploads/${photo}`} 
                                      alt="" 
                                      className="w-full h-full object-cover"/>
                             </div>
@@ -82,7 +83,7 @@ export default function PlaceGallery({place}){
                         <div className="aspect-square cursor-pointer">
                             <img 
                                 className="object-cover w-full h-full"
-                                src={`http://localhost:4000/uploads/${place.photos[0]}`} 
+                                src={`${API_BASE_URL}/uploads/${place.photos[0]}`} 
                             />
                         </div>
                     )}
@@ -93,7 +94,7 @@ export default function PlaceGallery({place}){
                             <div className="aspect-square cursor-pointer">
                                 <img 
                                     className="object-cover w-full h-full"
-                                    src={`http://localhost:4000/uploads/${place.photos[1]}`} 
+                                    src={`${API_BASE_URL}/uploads/${place.photos[1]}`} 
                                 />
                             </div>
                         )}
@@ -103,7 +104,7 @@ export default function PlaceGallery({place}){
                             <div className="aspect-square cursor-pointer">
                                 <img 
                                     className="object-cover w-full h-full"
-                                    src={`http://localhost:4000/uploads/${place.photos[2]}`} 
+                                    src={`${API_BASE_URL}/uploads/${place.photos[2]}`} 
                                 />
                             </div>
                         )}
@@ -115,7 +116,7 @@ export default function PlaceGallery({place}){
                             <div className="aspect-square cursor-pointer">
                                 <img 
                                     className="object-cover w-full h-full"
-                                    src={`http://localhost:4000/uploads/${place.photos[3]}`} 
+                                    src={`${API_BASE_URL}/uploads/${place.photos[3]}`} 
                                 />
                             </div>
                         )}
@@ -125,7 +126,7 @@ export default function PlaceGallery({place}){
                             <div className="aspect-square cursor-pointer">
                                 <img 
                                     className="object-cover w-full h-full"
-                                    src={`http://localhost:4000/uploads/${place.photos[4]}`} 
+                                    src={`${API_BASE_URL}/uploads/${place.photos[4]}`} 
                                 />
                                 {place.photos?.length > 5 && (
                                     <div className="absolute inset-0 bg-black bg-opacity-40 text-white flex items-center justify-center">

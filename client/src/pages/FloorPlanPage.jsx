@@ -1,87 +1,72 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from 'axios';
-import { useProgress } from "../HostLayout";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "../contexts/FormContext";
 import HeaderActions from "../components/HeaderActions";
-import { getNextPage, getPreviousPage, getPageProgress } from "../utils/pageOrder";
+import axios from "../utils/axios";
 
 export default function FloorPlanPage() {
-    const [guests, setGuests] = useState(1);
-    const [bedrooms, setBedrooms] = useState(1);
-    const [beds, setBeds] = useState(1);
-    const [bathrooms, setBathrooms] = useState(1);
-    const [loading, setLoading] = useState(true);
-    const { setProgress } = useProgress();
     const navigate = useNavigate();
+    const { formData, updateFormData } = useForm();
+    const [loading, setLoading] = useState(true);
+    const [floorPlan, setFloorPlan] = useState(formData.floorPlan || {
+        guests: 1,
+        bedrooms: 1,
+        beds: 1,
+        bathrooms: 1
+    });
 
+    // Load existing data when component mounts
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data')
-            .then(({ data }) => {
-                setGuests(data?.maxGuests || 1);
+        const loadData = async () => {
+            try {
+                const { data } = await axios.get('/places-form-data');
+                if (data && data.floorPlan) {
+                    setFloorPlan(data.floorPlan);
+                }
+            } catch (err) {
+                console.error("Error loading floor plan data:", err);
+            } finally {
                 setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error loading initial floor plan data:", err);
-                setLoading(false);
-            });
-
-        const progress = getPageProgress('floor-plan');
-        setProgress(progress);
-    }, [setProgress]);
-
-    async function updateFloorPlanData(field, value) {
-        if (field === 'maxGuests') setGuests(value);
-        if (field === 'bedrooms') setBedrooms(value);
-        if (field === 'beds') setBeds(value);
-        if (field === 'bathrooms') setBathrooms(value);
-
-        try {
-            let payload = {};
-            if (field === 'maxGuests') payload = { maxGuests: value };
-
-            if (field !== 'bedrooms' && field !== 'beds' && field !== 'bathrooms') {
-                 await axios.put('/places-form-data', payload);
             }
+        };
+        loadData();
+    }, []);
 
-        } catch (err) {
-            console.error(`Error updating ${field}:`, err);
-        }
-    }
+    // Update form context when floorPlan changes
+    useEffect(() => {
+        const updateForm = async () => {
+            if (!loading) {
+                try {
+                    await axios.put('/places-form-data', { floorPlan });
+                    updateFormData('floorPlan', floorPlan);
+                } catch (error) {
+                    console.error("Error updating floor plan:", error);
+                }
+            }
+        };
+        updateForm();
+    }, [floorPlan, loading]);
 
     const handleCounterChange = (field, delta) => {
-        let newValue;
-        if (field === 'maxGuests') {
-            newValue = Math.max(1, guests + delta);
-            updateFloorPlanData('maxGuests', newValue);
-        }
-        if (field === 'bedrooms') {
-            newValue = Math.max(1, bedrooms + delta);
-            setBedrooms(newValue);
-        }
-        if (field === 'beds') {
-            newValue = Math.max(1, beds + delta);
-            setBeds(newValue);
-        }
-        if (field === 'bathrooms') {
-            newValue = Math.max(1, bathrooms + delta);
-            setBathrooms(newValue);
+        setFloorPlan(prev => ({
+            ...prev,
+            [field]: Math.max(1, prev[field] + delta)
+        }));
+    };
+
+    const handleNext = async () => {
+        try {
+            await axios.put('/places-form-data', { floorPlan });
+            navigate('/account/hosting/amenities', { replace: true });
+        } catch (error) {
+            console.error("Error saving floor plan:", error);
+            alert("Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.");
         }
     };
 
-    function handleNext() {
-        const nextPage = getNextPage('floor-plan');
-        if (nextPage) {
-            navigate(`/account/hosting/${nextPage}`);
-        }
-    }
-
-    function handleBack() {
-        const prevPage = getPreviousPage('floor-plan');
-        if (prevPage) {
-            navigate(`/account/hosting/${prevPage}`);
-        }
-    }
+    const handleBack = () => {
+        navigate('/account/hosting/location', { replace: true });
+    };
 
     if (loading) {
         return (
@@ -115,15 +100,15 @@ export default function FloorPlanPage() {
                             </div>
                             <div className="flex items-center gap-4">
                                 <button
-                                    onClick={() => handleCounterChange('maxGuests', -1)}
+                                    onClick={() => handleCounterChange('guests', -1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={guests <= 1}
+                                    disabled={floorPlan.guests <= 1}
                                 >
                                     <span className="text-xl leading-none relative" style={{top: '-1px'}}>−</span>
                                 </button>
-                                <span className="w-8 text-center text-base">{guests}</span>
+                                <span className="w-8 text-center text-base">{floorPlan.guests}</span>
                                 <button
-                                    onClick={() => handleCounterChange('maxGuests', 1)}
+                                    onClick={() => handleCounterChange('guests', 1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white"
                                 >
                                     <span className="text-xl leading-none relative" style={{top: '-1px'}}>+</span>
@@ -140,11 +125,11 @@ export default function FloorPlanPage() {
                                 <button
                                     onClick={() => handleCounterChange('bedrooms', -1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={bedrooms <= 1}
+                                    disabled={floorPlan.bedrooms <= 1}
                                 >
                                     <span className="text-xl leading-none relative" style={{top: '-1px'}}>−</span>
                                 </button>
-                                <span className="w-8 text-center text-base">{bedrooms}</span>
+                                <span className="w-8 text-center text-base">{floorPlan.bedrooms}</span>
                                 <button
                                     onClick={() => handleCounterChange('bedrooms', 1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white"
@@ -163,11 +148,11 @@ export default function FloorPlanPage() {
                                 <button
                                     onClick={() => handleCounterChange('beds', -1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={beds <= 1}
+                                    disabled={floorPlan.beds <= 1}
                                 >
                                     <span className="text-xl leading-none relative" style={{top: '-1px'}}>−</span>
                                 </button>
-                                <span className="w-8 text-center text-base">{beds}</span>
+                                <span className="w-8 text-center text-base">{floorPlan.beds}</span>
                                 <button
                                     onClick={() => handleCounterChange('beds', 1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white"
@@ -186,11 +171,11 @@ export default function FloorPlanPage() {
                                 <button
                                     onClick={() => handleCounterChange('bathrooms', -1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={bathrooms <= 1}
+                                    disabled={floorPlan.bathrooms <= 1}
                                 >
                                     <span className="text-xl leading-none relative" style={{top: '-1px'}}>−</span>
                                 </button>
-                                <span className="w-8 text-center text-base">{bathrooms}</span>
+                                <span className="w-8 text-center text-base">{floorPlan.bathrooms}</span>
                                 <button
                                     onClick={() => handleCounterChange('bathrooms', 1)}
                                     className="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center hover:border-gray-600 bg-white"

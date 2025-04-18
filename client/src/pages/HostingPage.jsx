@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "../utils/axios";
+import { API_BASE_URL } from '../config';
 
 export default function HostingPage() {
     const [places, setPlaces] = useState([]);
@@ -46,7 +47,7 @@ export default function HostingPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 mb-8">
-                    <Link to="/account/hosting/new" 
+                    <Link to="/account/hosting/overview" 
                         className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -58,41 +59,15 @@ export default function HostingPage() {
                 {/* Properties Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {places.length > 0 && places.map(place => (
-                        <Link to={'/account/hosting/'+place._id} key={place._id} 
-                            className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="aspect-video relative overflow-hidden">
+                        <Link to={`/account/listings/${place._id}`} key={place._id} className="flex cursor-pointer gap-4 bg-gray-100 p-4 rounded-2xl hover:bg-gray-200 transition-colors">
+                            <div className="flex w-32 h-32 bg-gray-300 grow shrink-0 rounded-xl overflow-hidden">
                                 {place.photos?.[0] && (
-                                    <img 
-                                        className="object-cover w-full h-full" 
-                                        src={'http://localhost:4000/uploads/'+place.photos[0]} 
-                                        alt=""
-                                    />
+                                    <img className="object-cover w-full h-full" src={`${API_BASE_URL}/uploads/${place.photos[0]}`} alt={place.title} />
                                 )}
                             </div>
-                            <div className="p-4">
-                                <h2 className="text-xl font-semibold mb-2 line-clamp-1">{place.title}</h2>
-                                <p className="text-gray-500 text-sm mb-2 line-clamp-2">{place.description}</p>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-lg font-semibold">{place.price?.toLocaleString('vi-VN')} VNĐ</span>
-                                    <span className="text-sm text-gray-500">/ đêm</span>
-                                </div>
-                                <div className="mt-2 flex items-center gap-2">
-                                    {place.status === 'pending' && (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                            Chờ xác nhận
-                                        </span>
-                                    )}
-                                    {place.status === 'confirmed' && (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Đang cho thuê
-                                        </span>
-                                    )}
-                                    {place.status === 'cancelled' && (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Đã hủy
-                                        </span>
-                                    )}
-                                </div>
+                            <div className="grow-0 shrink overflow-hidden">
+                                <h2 className="text-xl font-semibold truncate">{place.title}</h2>
+                                <p className="text-sm mt-2 text-gray-600 line-clamp-3">{place.description}</p>
                             </div>
                         </Link>
                     ))}
@@ -107,7 +82,7 @@ export default function HostingPage() {
                         </svg>
                         <h3 className="text-xl font-medium text-gray-900 mb-2">Bạn chưa có phòng nào</h3>
                         <p className="text-gray-500 mb-6">Hãy bắt đầu bằng việc đăng phòng đầu tiên của bạn</p>
-                        <Link to="/account/hosting/new" 
+                        <Link to="/account/hosting/overview" 
                             className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

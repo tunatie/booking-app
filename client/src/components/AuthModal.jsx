@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { UserContext } from '../UserContext';
 
 export default function AuthModal({ isOpen, onClose }) {

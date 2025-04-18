@@ -38,55 +38,67 @@ import HostingPage from './pages/HostingPage'
 import ProfilePage from './pages/ProfilePage'
 import AccountSettingsPage from './pages/AccountSettingsPage'
 import PersonalInfoPage from './pages/PersonalInfoPage'
+import PaymentSettingsPage from './pages/PaymentSettingsPage'
 import ListingsPage from './pages/ListingsPage'
 import ReservationsPage from './pages/ReservationsPage'
+import PaymentCallback from './pages/PaymentCallback'
+import { ProgressProvider } from './contexts/ProgressContext'
+import { FormProvider } from './contexts/FormContext'
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<IndexPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/account" element={<AccountPage />} />
-        <Route path="/account/bookings" element={<BookingsPage />} />
-        <Route path="/account/bookings/:id" element={<BookingPage />} />
-        <Route path="/place/:id" element={<PlacePage />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/trips" element={<Trips />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/host-experience" element={<HostExperience />} />
-        <Route path="/become-host" element={<BecomeHost />} />
-      </Route>
-      <Route element={<HostLayout />}>
-        <Route path="/account/hosting" element={<HostingPage />} />
-        <Route path="/account/hosting/listings" element={<ListingsPage />} />
-        <Route path="/account/hosting/reservations" element={<ReservationsPage />} />
-        <Route path="/account/hosting/overview" element={<OverviewPage />} />
-        <Route path="/account/hosting/new" element={<PlacesFormPage />} />
-        <Route path="/account/hosting/structure" element={<StructurePage />} />
-        <Route path="/account/hosting/privacy-type" element={<PrivacyTypePage />} />
-        <Route path="/account/hosting/location" element={<LocationPage />} />
-        <Route path="/account/hosting/floor-plan" element={<FloorPlanPage />} />
-        <Route path="/account/hosting/stand-out" element={<StandOutPage />} />
-        <Route path="/account/hosting/amenities" element={<AmenitiesPage />} />
-        <Route path="/account/hosting/photos" element={<PhotosPage />} />
-        <Route path="/account/hosting/title" element={<TitlePage />} />
-        <Route path="/account/hosting/description" element={<DescriptionPage />} />
-        <Route path="/account/hosting/finish" element={<FinishPage />} />
-        <Route path="/account/hosting/booking-settings" element={<BookingSettingsPage />} />
-        <Route path="/account/hosting/guest-type" element={<GuestTypePage />} />
-        <Route path="/account/hosting/price" element={<PricePage />} />
-        <Route path="/account/hosting/discount" element={<DiscountPage />} />
-        <Route path="/account/hosting/security" element={<SecurityPage />} />
-        <Route path="/account/hosting/receipt" element={<ReceiptPage />} />
-        <Route path="/account/hosting/celebration" element={<CelebrationPage />} />
-        <Route path="/account/hosting/:id" element={<PlaceEditPage />} />
-        <Route path="/users/show/:id" element={<ProfilePage />} />
-        <Route path="/account-settings" element={<AccountSettingsPage />} />
-        <Route path="/account-settings/personal-info" element={<PersonalInfoPage />} />
-      </Route>
-    </Routes>
+    <FormProvider>
+      <ProgressProvider>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<IndexPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/account/bookings" element={<BookingsPage />} />
+            <Route path="/account/bookings/:id" element={<BookingPage />} />
+            <Route path="/place/:id" element={<PlacePage />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/host-experience" element={<HostExperience />} />
+            <Route path="/become-host" element={<BecomeHost />} />
+            <Route path="/account-settings" element={<AccountSettingsPage />} />
+            <Route path="/account-settings/personal-info" element={<PersonalInfoPage />} />
+            <Route path="/account-settings/payments" element={<PaymentSettingsPage />} />
+          </Route>
+          <Route element={<HostLayout />}>
+            <Route path="/account/hosting" element={<HostingPage />} />
+            <Route path="/account/hosting/listings" element={<ListingsPage />} />
+            <Route path="/account/hosting/reservations" element={<ReservationsPage />} />
+            <Route path="/account/hosting/overview" element={<OverviewPage />} />
+            <Route path="/account/hosting/new" element={<PlacesFormPage />} />
+            <Route path="/account/hosting/structure" element={<StructurePage />} />
+            <Route path="/account/hosting/privacy-type" element={<PrivacyTypePage />} />
+            <Route path="/account/hosting/location" element={<LocationPage />} />
+            <Route path="/account/hosting/floor-plan" element={<FloorPlanPage />} />
+            <Route path="/account/hosting/stand-out" element={<StandOutPage />} />
+            <Route path="/account/hosting/amenities" element={<AmenitiesPage />} />
+            <Route path="/account/hosting/photos" element={<PhotosPage />} />
+            <Route path="/account/hosting/title" element={<TitlePage />} />
+            <Route path="/account/hosting/description" element={<DescriptionPage />} />
+            <Route path="/account/hosting/finish" element={<FinishPage />} />
+            <Route path="/account/hosting/booking-settings" element={<BookingSettingsPage />} />
+            <Route path="/account/hosting/guest-type" element={<GuestTypePage />} />
+            <Route path="/account/hosting/price" element={<PricePage />} />
+            <Route path="/account/hosting/discount" element={<DiscountPage />} />
+            <Route path="/account/hosting/security" element={<SecurityPage />} />
+            <Route path="/account/hosting/receipt" element={<ReceiptPage />} />
+            <Route path="/account/hosting/celebration" element={<CelebrationPage />} />
+            <Route path="/account/hosting/:id" element={<PlaceEditPage />} />
+            <Route path="/users/show/:id" element={<ProfilePage />} />
+          </Route>
+          <Route path="/payment/callback" element={<PaymentCallback />} />
+        </Routes>
+        <Toaster />
+      </ProgressProvider>
+    </FormProvider>
   )
 }
 

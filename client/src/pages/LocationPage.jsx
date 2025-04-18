@@ -1,37 +1,83 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-import LocationMap from "../components/LocationMap";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getNextPage, getPreviousPage } from "../utils/pageOrder";
+import axios from "../utils/axios";
 import HeaderActions from "../components/HeaderActions";
-import axios from "axios";
+import { debounce } from "lodash";
+import { useForm } from "../contexts/FormContext";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import LocationMap from "../components/LocationMap";
+import { getPreviousRoute, getNextRoute, getFallbackRoute } from '../utils/navigation';
+
+// Fix for default marker icons in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+function LocationMarker({ position, setPosition }) {
+    const map = useMapEvents({
+        click(e) {
+            setPosition(e.latlng);
+        },
+    });
+
+    return position === null ? null : (
+        <Marker position={position} />
+    );
+}
 
 export default function LocationPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { formData, updateFormData } = useForm();
+    const [loading, setLoading] = useState(true);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const dropdownRef = useRef(null);
     const inputRef = useRef(null);
     const mapRef = useRef(null);
-    const [address, setAddress] = useState(() => {
-        // Lấy địa chỉ từ localStorage khi khởi tạo
-        return localStorage.getItem('placeAddress') || "";
-    });
-    const [selectedLocation, setSelectedLocation] = useState(() => {
-        // Lấy thông tin location từ localStorage
-        const saved = localStorage.getItem('placeLocation');
-        return saved ? JSON.parse(saved) : null;
-    });
+    const [address, setAddress] = useState(formData.address || "");
+    const [selectedLocation, setSelectedLocation] = useState(formData.location || null);
 
-    // Lưu địa chỉ vào localStorage khi có thay đổi
+    // Load existing data when component mounts
     useEffect(() => {
-        localStorage.setItem('placeAddress', address);
-    }, [address]);
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                const { data } = await axios.get('/places-form-data');
+                if (!data) {
+                    alert('Không tìm thấy dữ liệu. Vui lòng thử lại.');
+                    navigate(getFallbackRoute('location'), { replace: true });
+                    return;
+                }
+                if (data.address && data.address !== address) {
+                    setAddress(data.address);
+                }
+                if (data.location && JSON.stringify(data.location) !== JSON.stringify(selectedLocation)) {
+                    setSelectedLocation(data.location);
+                }
+            } catch (err) {
+                console.error("Error loading location data:", err);
+                alert('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
 
-    // Lưu location vào localStorage khi có thay đổi
+    // Update form context when address or location changes
     useEffect(() => {
-        if (selectedLocation) {
-            localStorage.setItem('placeLocation', JSON.stringify(selectedLocation));
-        }
-    }, [selectedLocation]);
+        const updateForm = async () => {
+            updateFormData('address', address);
+            updateFormData('location', selectedLocation);
+        };
+        updateForm();
+    }, [address, selectedLocation]);
 
     // Xử lý click outside để đóng dropdown
     useEffect(() => {
@@ -55,47 +101,70 @@ export default function LocationPage() {
         }
     };
 
-    async function handleNext() {
+    const handleNext = async () => {
         if (!address.trim()) {
             alert('Vui lòng nhập địa chỉ');
             return;
         }
+
         try {
-            // Lưu address vào bản nháp trên server
-            await axios.put('/places-form-data', { address }); 
-            
-            // Lấy trang tiếp theo và điều hướng
-            const nextPage = getNextPage('location');
-            if (nextPage) {
-                navigate(`/account/hosting/${nextPage}`);
+            await axios.put('/places-form-data', {
+                address,
+                location: selectedLocation
+            });
+            const nextRoute = getNextRoute('location');
+            if (nextRoute) {
+                navigate(nextRoute, { replace: true });
             }
         } catch (error) {
-            console.error("Error updating address in draft:", error);
-            alert("Lỗi cập nhật địa chỉ bản nháp. Vui lòng thử lại.");
+            console.error("Error updating location data:", error);
+            alert("Lỗi cập nhật địa chỉ. Vui lòng thử lại.");
         }
-    }
+    };
 
-    function handleBack() {
-        const prevPage = getPreviousPage('location');
-        if (prevPage) {
-            navigate(`/account/hosting/${prevPage}`);
+    const handleBack = () => {
+        const prevRoute = getPreviousRoute('location');
+        if (prevRoute) {
+            navigate(prevRoute, { replace: true });
         }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col">
+                <HeaderActions />
+                <div className="flex-1 flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                </div>
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+                    <div className="max-w-[1280px] mx-auto px-20 py-6 flex justify-between">
+                        <button 
+                            onClick={handleBack}
+                            className="bg-white px-6 py-3 rounded-lg hover:bg-gray-100 border border-black font-medium"
+                        >
+                            Quay lại
+                        </button>
+                        <button 
+                            className="px-6 py-3 rounded-lg font-medium bg-gray-300 text-gray-500 cursor-not-allowed"
+                            disabled
+                        >
+                            Tiếp theo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="min-h-screen flex flex-col">
-            <HeaderActions />
+            <HeaderActions 
+                title="Chỗ ở của bạn nằm ở đâu?"
+                subtitle="Địa chỉ của bạn chỉ được chia sẻ với khách sau khi họ đặt phòng thành công."
+            />
             
             <div className="flex-1 px-20 py-8">
-                {/* Main content */}
                 <div className="max-w-2xl mx-auto">
-                    <h1 className="text-[32px] font-medium mb-2">
-                        Chỗ ở của bạn nằm ở đâu?
-                    </h1>
-                    <p className="text-gray-600 mb-8">
-                        Địa chỉ của bạn chỉ được chia sẻ với khách sau khi họ đặt phòng thành công.
-                    </p>
-
                     {/* Search input */}
                     <div className="relative mb-4">
                         <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">

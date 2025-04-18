@@ -1,32 +1,40 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-// Set default config
-axios.defaults.baseURL = 'http://localhost:4000';
-axios.defaults.withCredentials = true;
+const instance = axios.create({
+    baseURL: 'http://localhost:4001/api',
+    withCredentials: true
+});
 
-// Add request interceptor
-axios.interceptors.request.use(
+// Add request interceptor for debugging
+instance.interceptors.request.use(
     (config) => {
-        // Do something before request is sent
+        console.log('API Request:', {
+            url: config.url,
+            method: config.method,
+            data: config.data
+        });
         return config;
     },
     (error) => {
-        // Do something with request error
+        console.error('API Request Error:', error);
         return Promise.reject(error);
     }
 );
 
-// Add response interceptor
-axios.interceptors.response.use(
+// Add response interceptor for debugging
+instance.interceptors.response.use(
     (response) => {
-        // Any status code that lie within the range of 2xx cause this function to trigger
+        console.log('API Response:', {
+            status: response.status,
+            data: response.data
+        });
         return response;
     },
     (error) => {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        console.error('API Error:', error);
+        console.error('API Response Error:', error);
         return Promise.reject(error);
     }
 );
 
-export default axios; 
+export default instance; 

@@ -1,62 +1,73 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from '../utils/axios';
 import { getNextPage, getPreviousPage } from "../utils/pageOrder";
 import HeaderActions from "../components/HeaderActions";
+import { useForm } from "../contexts/FormContext";
+
+// Helper function to get user data
+const getUserDataFromReq = async () => {
+    try {
+        const { data } = await axios.get('/profile');
+        return data;
+    } catch (error) {
+        console.error('Error getting user data:', error);
+        return null;
+    }
+};
 
 export default function AmenitiesPage() {
     const navigate = useNavigate();
-    const [selectedAmenities, setSelectedAmenities] = useState([]);
+    const { formData, updateFormData } = useForm();
     const [loading, setLoading] = useState(true);
+    const [selectedAmenities, setSelectedAmenities] = useState(formData.amenities || []);
 
-    // Load dữ liệu amenities ban đầu từ API
+    // Load existing data when component mounts
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data')
-            .then(({ data }) => {
-                // Giả sử dữ liệu tiện nghi lưu trong trường `amenities` hoặc `perks`
-                // Kiểm tra cả hai trường
-                const amenitiesFromServer = data?.amenities || data?.perks || [];
-                setSelectedAmenities(amenitiesFromServer);
+        const loadData = async () => {
+            try {
+                const { data } = await axios.get('/places-form-data');
+                if (data && data.amenities && JSON.stringify(data.amenities) !== JSON.stringify(selectedAmenities)) {
+                    setSelectedAmenities(data.amenities);
+                }
                 setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error loading initial amenities:", err);
+            } catch (err) {
+                console.error("Error loading amenities data:", err);
                 setLoading(false);
-            });
+            }
+        };
+        loadData();
     }, []);
 
-    // Hàm cập nhật amenities trên server (Debounced để tránh gọi API quá nhiều)
+    // Update form context when selectedAmenities changes
     useEffect(() => {
-        // Chỉ chạy khi không phải lần load đầu tiên và selectedAmenities đã thay đổi
-        if (!loading) {
-            const handler = setTimeout(() => {
-                // Cập nhật vào cả `amenities` và `perks` cho nhất quán (hoặc chọn 1 trường)
-                axios.put('/places-form-data', { amenities: selectedAmenities, perks: selectedAmenities })
-                    .catch(err => console.error("Error updating amenities:", err));
-            }, 500); // Chờ 500ms sau lần thay đổi cuối cùng
-
-            // Cleanup function để hủy timeout nếu component unmount hoặc state thay đổi lần nữa
-            return () => {
-                clearTimeout(handler);
-            };
-        }
+        const updateForm = async () => {
+            if (!loading) {
+                try {
+                    await axios.put('/places-form-data', { amenities: selectedAmenities });
+                    updateFormData('amenities', selectedAmenities);
+                } catch (error) {
+                    console.error("Error updating amenities:", error);
+                }
+            }
+        };
+        updateForm();
     }, [selectedAmenities, loading]);
 
-    function handleNext() {
-        const nextPage = getNextPage('amenities');
-        if (nextPage) {
-            navigate(`/account/hosting/${nextPage}`);
+    const handleNext = async () => {
+        try {
+            await axios.put('/places-form-data', { amenities: selectedAmenities });
+            navigate('/account/hosting/photos', { replace: true });
+        } catch (error) {
+            console.error("Error saving amenities:", error);
+            alert("Có lỗi xảy ra khi lưu tiện nghi. Vui lòng thử lại.");
         }
-    }
+    };
 
-    function handleBack() {
-        const prevPage = getPreviousPage('amenities');
-        if (prevPage) {
-            navigate(`/account/hosting/${prevPage}`);
-        }
-    }
+    const handleBack = () => {
+        navigate('/account/hosting/floor-plan', { replace: true });
+    };
 
     const toggleAmenity = (amenityId) => {
         setSelectedAmenities(prev => {
@@ -195,14 +206,14 @@ export default function AmenitiesPage() {
 
             {/* Footer */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
-                <div className="max-w-[1280px] mx-auto px-20 py-6 flex justify-between">
-                    <button 
+                <div className="max-w-screen-lg mx-auto px-20 py-4 flex justify-between items-center">
+                    <button
                         onClick={handleBack}
-                        className="bg-white px-6 py-3 rounded-lg hover:bg-gray-100 border border-black font-medium"
+                        className="px-4 py-2 rounded-lg border border-gray-200 font-medium bg-white"
                     >
                         Quay lại
                     </button>
-                    <button 
+                    <button
                         onClick={handleNext}
                         className="px-6 py-3 rounded-lg font-medium bg-black text-white hover:bg-[#222222]"
                     >

@@ -1,141 +1,151 @@
 const express = require('express');
 const router = express.Router();
-const Booking = require('../models/Booking');
-const auth = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const jwtSecret = 'asdasdc3dcsxsdasda';
 const Place = require('../models/Place');
 
-// Create a new booking
-router.post('/', auth, async (req, res) => {
+// In-memory storage for form data (you may want to use MongoDB instead in production)
+const formDataStorage = new Map();
+
+function getUserDataFromReq(req) {
+    return new Promise((resolve, reject) => {
+        try {
+            const token = req.cookies?.token;
+            if (!token) {
+                console.log('No token found in cookies');
+                resolve(null);
+                return;
+            }
+
+            jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+                if (err) {
+                    console.error('JWT verification error:', err);
+                    resolve(null);
+                    return;
+                }
+                resolve(userData);
+            });
+        } catch (error) {
+            console.error('Error in getUserDataFromReq:', error);
+            resolve(null);
+        }
+    });
+}
+
+// Create a new place
+router.post('/places', async (req, res) => {
     try {
-        const booking = new Booking({
+        const userData = await getUserDataFromReq(req);
+        if (!userData) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Validate and convert price to number
+        const price = Number(req.body.price);
+        if (isNaN(price) || price < 100000) {
+            return res.status(400).json({ 
+                error: 'Invalid price. Price must be a number and at least 100,000 VND' 
+            });
+        }
+
+        const placeData = {
             ...req.body,
-            user: req.user._id
+            price: price, // Use the converted price
+            owner: userData.id,
+            draft: false
+        };
+
+        console.log('Creating new place:', placeData);
+        const place = await Place.create(placeData);
+        console.log('Place created:', place);
+
+        res.json(place);
+    } catch (error) {
+        console.error('Error creating place:', error);
+        res.status(500).json({ 
+            error: 'Failed to create place',
+            details: error.message 
         });
-        await booking.save();
-        res.status(201).json(booking);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
     }
 });
 
-// Get all bookings for a user
-router.get('/user', auth, async (req, res) => {
+// Get form data
+router.get('/places-form-data', async (req, res) => {
     try {
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate('place')
-            .sort('-createdAt');
-        res.json(bookings);
+        const userData = await getUserDataFromReq(req);
+        if (!userData) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const formData = formDataStorage.get(userData.id) || {};
+        console.log('Getting form data for user:', userData.id, formData);
+        res.json(formData);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error getting form data:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Get a single booking
-router.get('/:id', auth, async (req, res) => {
+// Update form data
+router.put('/places-form-data', async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id)
-            .populate('place')
-            .populate('user', 'name email');
+        const userData = await getUserDataFromReq(req);
+        if (!userData) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Get existing data
+        const existingData = formDataStorage.get(userData.id) || {};
         
-        if (!booking) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
+        // Merge with new data
+        const updatedData = {
+            ...existingData,
+            ...req.body
+        };
 
-        // Check if the user is the owner of the booking
-        if (booking.user._id.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized' });
-        }
-
-        res.json(booking);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Update a booking
-router.put('/:id', auth, async (req, res) => {
-    try {
-        const booking = await Booking.findById(req.params.id);
+        // Store updated data
+        formDataStorage.set(userData.id, updatedData);
         
-        if (!booking) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
-
-        // Check if the user is the owner of the booking
-        if (booking.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized' });
-        }
-
-        Object.assign(booking, req.body);
-        await booking.save();
-        res.json(booking);
+        console.log('Updated form data for user:', userData.id, updatedData);
+        res.json(updatedData);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Error updating form data:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Delete a booking
-router.delete('/:id', auth, async (req, res) => {
+// Delete form data
+router.delete('/places-form-data', async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id);
-        
-        if (!booking) {
-            return res.status(404).json({ message: 'Booking not found' });
+        const userData = await getUserDataFromReq(req);
+        if (!userData) {
+            return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // Check if the user is the owner of the booking
-        if (booking.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: 'Not authorized' });
-        }
-
-        await booking.deleteOne();
-        res.json({ message: 'Booking deleted successfully' });
+        formDataStorage.delete(userData.id);
+        res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error deleting form data:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// NEW ROUTE: Get bookings for the host
-router.get('/host', auth, async (req, res) => {
+// Get a single place by ID
+router.get('/places/:id', async (req, res) => {
     try {
-        const hostId = req.user._id; // Get host ID from authenticated user
-        const requestedStatus = req.query.status;
+        const { id } = req.params;
+        const place = await Place.findById(id)
+            .populate('owner', 'name email avatar');
 
-        // 1. Find places owned by the host
-        const hostPlaces = await Place.find({ owner: hostId }).select('_id');
-        const hostPlaceIds = hostPlaces.map(p => p._id);
-
-        // 2. Build the query for bookings
-        const query = { place: { $in: hostPlaceIds } };
-
-        // 3. Filter by status
-        if (requestedStatus && requestedStatus !== 'all') {
-            let backendStatus = requestedStatus;
-            if (requestedStatus === 'upcoming') {
-                backendStatus = 'pending'; // Assuming 'pending' is the status for upcoming bookings
-            } else if (requestedStatus === 'completed') {
-                backendStatus = 'completed'; // Adjust if your status name is different
-            } else if (requestedStatus === 'cancelled') {
-                backendStatus = 'cancelled'; // Adjust if your status name is different
-            }
-
-            if (backendStatus !== 'all') {
-                query.status = backendStatus;
-            }
+        if (!place) {
+            return res.status(404).json({ error: 'Place not found' });
         }
 
-        // 4. Find bookings, populate place and user info
-        const bookings = await Booking.find(query)
-                                   .populate('place', 'title photos price') // Populate necessary place fields
-                                   .populate('user', 'name') // Populate user name only
-                                   .sort('-createdAt'); // Sort by creation date
-
-        res.json(bookings);
-
+        res.json(place);
     } catch (error) {
-        console.error("Error fetching host bookings:", error);
-        res.status(500).json({ message: 'Failed to fetch bookings.' });
+        console.error('Error fetching place:', error);
+        res.status(500).json({ error: 'Failed to fetch place' });
     }
 });
 
-module.exports = router; 
+module.exports = router;

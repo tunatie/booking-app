@@ -3,7 +3,7 @@ import { UserContext } from "../UserContext";
 import { useContext, useState, useRef, useEffect } from "react";
 import LanguageModal from "./LanguageModal";
 import AuthModal from "./AuthModal";
-import axios from "axios";
+import axios from "../utils/axios";
 
 export default function Header() {
   const {user, setUser} = useContext(UserContext);
@@ -163,7 +163,7 @@ export default function Header() {
                 {!user && (
                   <>
                     <Link to="/host" className="block px-4 py-2 hover:bg-gray-100 bg-white">
-                      Cho thuê chỗ ở qua Airbnb
+                      Cho thuê chỗ ở qua TTK
                     </Link>
                     <button onClick={() => setIsLanguageModalOpen(true)} className="w-full text-left px-4 py-2 hover:bg-gray-100 bg-white">
                       Ngôn ngữ & Tiền tệ

@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../utils/axios";
 import AddressLink from "./AddressLink";
 import PlaceGallery from "../PlaceGallery";
 import BookingDates from "../BookingDates";
@@ -21,12 +21,17 @@ export default function BookingPage() {
     async function loadBooking() {
         try {
             setLoading(true);
+            console.log('Loading booking with ID:', id);
             const {data} = await axios.get(`/bookings/${id}`);
+            console.log('Booking data:', data);
+            if (!data || !data.place) {
+                throw new Error('Dữ liệu đặt phòng không hợp lệ');
+            }
             setBooking(data);
             setError(null);
         } catch (err) {
             console.error('Error loading booking:', err);
-            setError('Không thể tải thông tin đặt phòng');
+            setError(err.message || 'Không thể tải thông tin đặt phòng');
         } finally {
             setLoading(false);
         }

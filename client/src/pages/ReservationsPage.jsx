@@ -1,27 +1,38 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axios';
 import PlaceImg from '../PlaceImg';
 import BookingDates from '../BookingDates';
 import BookingDetailsModal from '../components/BookingDetailsModal';
 
 export default function ReservationsPage() {
-    const [activeTab, setActiveTab] = useState('upcoming'); // upcoming, completed, cancelled, all, pending
+    const [activeTab, setActiveTab] = useState('upcoming'); // upcoming, completed, cancelled, all, pending, awaiting_payment
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         loadBookings();
+        loadUserData();
     }, []);
+
+    async function loadUserData() {
+        try {
+            const { data } = await axios.get('/profile');
+            setUser(data);
+        } catch (err) {
+            console.error('Error loading user data:', err);
+        }
+    }
 
     async function loadBookings() {
         try {
             setLoading(true);
             setError(null);
-            const { data } = await axios.get('/bookings');
+            const { data } = await axios.get('/bookings?type=host');
             
             if (!Array.isArray(data)) {
                 console.error('Invalid response format:', data);
@@ -30,13 +41,12 @@ export default function ReservationsPage() {
             }
             
             setBookings(data);
-            console.log('Fetched bookings:', data);
         } catch (err) {
             console.error('Error loading bookings:', err);
             if (err.response?.status === 401) {
                 setError('Vui lòng đăng nhập để xem danh sách đặt phòng');
             } else {
-                setError('Không thể tải danh sách đặt phòng. Vui lòng thử lại sau.');
+                setError(err.response?.data?.message || 'Không thể tải danh sách đặt phòng. Vui lòng thử lại sau.');
             }
         } finally {
             setLoading(false);
@@ -58,11 +68,11 @@ export default function ReservationsPage() {
 
     async function confirmBooking(bookingId) {
         try {
-            await axios.patch(`/bookings/${bookingId}`, { status: 'confirmed' });
+            await axios.patch(`/bookings/${bookingId}`, { status: 'awaiting_payment' });
             loadBookings();
         } catch (err) {
             console.error('Error confirming booking:', err);
-            alert('Có lỗi xảy ra khi xác nhận đặt phòng. Vui lòng thử lại sau.');
+            alert(err.response?.data?.message || 'Có lỗi xảy ra khi xác nhận đặt phòng. Vui lòng thử lại sau.');
         }
     }
 
@@ -72,7 +82,7 @@ export default function ReservationsPage() {
             loadBookings();
         } catch (err) {
             console.error('Error rejecting booking:', err);
-            alert('Có lỗi xảy ra khi từ chối đặt phòng. Vui lòng thử lại sau.');
+            alert(err.response?.data?.message || 'Có lỗi xảy ra khi từ chối đặt phòng. Vui lòng thử lại sau.');
         }
     }
 
@@ -82,14 +92,16 @@ export default function ReservationsPage() {
         const checkOut = new Date(booking.checkOut);
 
         switch (activeTab) {
+            case 'pending':
+                return booking.status === 'pending' || booking.status === 'requested';
+            case 'awaiting_payment':
+                return booking.status === 'awaiting_payment';
             case 'upcoming':
                 return checkIn > now && booking.status === 'confirmed';
             case 'completed':
-                return checkOut < now;
+                return booking.status === 'completed';
             case 'cancelled':
                 return booking.status === 'cancelled';
-            case 'pending':
-                return booking.status === 'pending' || booking.status === 'requested';
             case 'all':
                 return true;
             default:
@@ -173,6 +185,12 @@ export default function ReservationsPage() {
                             Chờ xác nhận
                         </button>
                         <button 
+                            onClick={() => setActiveTab('awaiting_payment')}
+                            className={`pb-4 px-2 bg-white ${activeTab === 'awaiting_payment' ? 'border-b-2 border-black font-medium' : ''}`}
+                        >
+                            Chờ thanh toán
+                        </button>
+                        <button 
                             onClick={() => setActiveTab('upcoming')}
                             className={`pb-4 px-2 bg-white ${activeTab === 'upcoming' ? 'border-b-2 border-black font-medium' : ''}`}
                         >
@@ -204,6 +222,7 @@ export default function ReservationsPage() {
                     <div className="py-12 text-center">
                         <h2 className="text-lg font-medium mb-2">
                             {activeTab === 'pending' && 'Bạn không có yêu cầu đặt phòng nào đang chờ xác nhận'}
+                            {activeTab === 'awaiting_payment' && 'Bạn không có đặt phòng nào đang chờ thanh toán'}
                             {activeTab === 'upcoming' && 'Bạn không có đặt phòng nào sắp tới'}
                             {activeTab === 'completed' && 'Bạn không có đặt phòng nào đã hoàn tất'}
                             {activeTab === 'cancelled' && 'Bạn không có đặt phòng nào đã hủy'}
@@ -277,6 +296,11 @@ export default function ReservationsPage() {
                                         </div>
                                     </div>
                                 </div>
+                                {booking.status === 'awaiting_payment' && (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Chờ thanh toán
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -303,6 +327,7 @@ export default function ReservationsPage() {
                     onConfirm={confirmBooking}
                     onReject={rejectBooking}
                     onCancel={cancelBooking}
+                    user={user}
                 />
             </div>
         </div>

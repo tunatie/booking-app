@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "../utils/axios";
+import { API_BASE_URL } from '../config';
 
 export default function ProfilePage() {
     const [profile, setProfile] = useState(null);
@@ -42,7 +43,7 @@ export default function ProfilePage() {
                         <div className="w-32 h-32 rounded-full overflow-hidden">
                             {profile.avatar ? (
                                 <img 
-                                    src={`http://localhost:4000/uploads/${profile.avatar}`}
+                                    src={`${API_BASE_URL}/uploads/${profile.avatar}`}
                                     alt={profile.name}
                                     className="w-full h-full object-cover"
                                 />
@@ -109,7 +110,7 @@ export default function ProfilePage() {
                                         {place.photos?.[0] && (
                                             <img 
                                                 className="object-cover w-full h-full" 
-                                                src={'http://localhost:4000/uploads/'+place.photos[0]} 
+                                                src={`${API_BASE_URL}/uploads/${place.photos[0]}`} 
                                                 alt=""
                                             />
                                         )}

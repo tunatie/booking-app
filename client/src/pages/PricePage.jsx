@@ -1,12 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useProgress } from "../HostLayout";
-import { getNextPage, getPreviousPage, getPageProgress } from "../utils/pageOrder";
+import { useProgress } from "../contexts/ProgressContext";
+import { getPageProgress } from "../utils/pageOrder";
 import HeaderActions from "../components/HeaderActions";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import axios from 'axios';
+import axios from "../utils/axios";
+import { useForm } from "../contexts/FormContext";
+import { getPreviousRoute, getNextRoute, getFallbackRoute } from '../utils/navigation';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,7 +29,8 @@ const customIcon = new L.Icon({
 export default function PricePage() {
     const { setProgress } = useProgress();
     const navigate = useNavigate();
-    const [basePrice, setBasePrice] = useState(1000000);
+    const { formData, updateFormData } = useForm();
+    const [basePrice, setBasePrice] = useState(formData.price || 1000000);
     const [loading, setLoading] = useState(true);
     const [showBreakdown, setShowBreakdown] = useState(false);
     const [showMapModal, setShowMapModal] = useState(false);
@@ -44,33 +47,38 @@ export default function PricePage() {
         { position: [10.7729, 106.6989], price: '721.983' }
     ];
 
+    // Set initial progress and load data
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data')
-            .then(({data}) => {
-                setBasePrice(data?.price || 1000000);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching initial price:', error);
-                setBasePrice(1000000);
-                setLoading(false);
-            });
-
         const progress = getPageProgress('price');
         setProgress(progress);
-    }, [setProgress]);
 
+        const loadData = async () => {
+            try {
+                const response = await axios.get('/places-form-data');
+                if (response.data && response.data.price) {
+                    setBasePrice(response.data.price);
+                    updateFormData('price', response.data.price);
+                }
+            } catch (error) {
+                console.error('Error loading price data:', error);
+                const fallbackRoute = getFallbackRoute();
+                if (fallbackRoute) {
+                    navigate(fallbackRoute);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    // Update form context when price changes
     useEffect(() => {
-        if (!loading && !isEditing) {
-            const handler = setTimeout(() => {
-                axios.put('/places-form-data', { price: basePrice })
-                    .catch(err => console.error("Error updating price:", err));
-            }, 500);
-
-            return () => clearTimeout(handler);
+        if (!isEditing && !loading) {
+            updateFormData('price', basePrice);
         }
-    }, [basePrice, loading, isEditing]);
+    }, [basePrice, isEditing, loading]);
 
     const serviceFee = Math.round(basePrice * 0.15);
     const totalPrice = basePrice + serviceFee;
@@ -121,23 +129,32 @@ export default function PricePage() {
         }
     };
 
-    const handleNext = () => {
-        axios.put('/places-form-data', { price: basePrice })
-            .then(() => {
-                const nextPage = getNextPage('price');
-                if (nextPage) {
-                    navigate(`/account/hosting/${nextPage}`);
-                }
-            })
-            .catch(err => {
-                console.error("Error saving final price:", err);
+    const handleNext = async () => {
+        if (basePrice < 100000) {
+            alert('Giá phòng không thể thấp hơn 100,000đ');
+            return;
+        }
+
+        try {
+            await axios.put('/places-form-data', {
+                ...formData,
+                price: basePrice
             });
+            
+            const nextRoute = getNextRoute('price');
+            if (nextRoute) {
+                navigate(nextRoute);
+            }
+        } catch (error) {
+            console.error('Error saving price:', error);
+            alert('Có lỗi xảy ra khi lưu giá. Vui lòng thử lại.');
+        }
     };
 
     const handleBack = () => {
-        const prevPage = getPreviousPage('price');
-        if (prevPage) {
-            navigate(`/account/hosting/${prevPage}`);
+        const prevRoute = getPreviousRoute('price');
+        if (prevRoute) {
+            navigate(prevRoute);
         }
     };
 
