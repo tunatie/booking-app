@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
+import { API_BASE_URL } from '../config';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export default function ListingsPage() {
     const [places, setPlaces] = useState([]);
@@ -124,7 +127,7 @@ export default function ListingsPage() {
                                     <div className="aspect-video relative overflow-hidden">
                                         {place.photos?.[0] ? (
                                             <img 
-                                                src={'http://localhost:4000/uploads/' + place.photos[0]}
+                                                src={`${API_BASE_URL}/uploads/${place.photos[0]}`}
                                                 alt={place.title}
                                                 className="object-cover w-full h-full"
                                             />

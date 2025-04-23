@@ -1,47 +1,44 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from '../utils/axios';
 import { getNextPage, getPreviousPage } from "../utils/pageOrder";
 import HeaderActions from "../components/HeaderActions";
+import { useForm } from "../contexts/FormContext";
 
 export default function TitlePage() {
     const navigate = useNavigate();
+    const { formData, updateFormData } = useForm();
     const [title, setTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const maxLength = 32;
+    const minLength = 10;
 
-    // Load title ban đầu từ API
+    // Load title from FormContext
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data')
-            .then(({ data }) => {
-                setTitle(data?.title || "");
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error loading initial title:", err);
-                setLoading(false);
-            });
-    }, []);
-
-    // Cập nhật title trên server (Debounced)
-    useEffect(() => {
-        if (!loading) {
-            const handler = setTimeout(() => {
-                axios.put('/places-form-data', { title: title })
-                    .catch(err => console.error("Error updating title:", err));
-            }, 500); // Chờ 500ms
-
-            return () => clearTimeout(handler);
+        if (formData?.title) {
+            setTitle(formData.title);
         }
-    }, [title, loading]);
+        setLoading(false);
+    }, [formData]);
+
+    const handleTitleBlur = () => {
+        if (title.trim().length >= minLength) {
+            updateFormData('title', title.trim());
+        }
+    };
 
     function handleNext() {
-        if (title.trim().length === 0) {
+        const trimmedTitle = title.trim();
+        if (trimmedTitle.length === 0) {
             alert('Vui lòng nhập tiêu đề');
             return;
         }
-        // Đã lưu tự động, chỉ cần chuyển trang
+        if (trimmedTitle.length < minLength) {
+            alert(`Tiêu đề phải có ít nhất ${minLength} ký tự`);
+            return;
+        }
+        // Save title before navigating
+        updateFormData('title', trimmedTitle);
         const nextPage = getNextPage('title');
         if (nextPage) {
             navigate(`/account/hosting/${nextPage}`);
@@ -49,6 +46,10 @@ export default function TitlePage() {
     }
 
     function handleBack() {
+        // Save title before going back if it's valid
+        if (title.trim().length >= minLength) {
+            updateFormData('title', title.trim());
+        }
         const prevPage = getPreviousPage('title');
         if (prevPage) {
             navigate(`/account/hosting/${prevPage}`);
@@ -81,13 +82,19 @@ export default function TitlePage() {
                                 <textarea
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value.slice(0, maxLength))}
+                                    onBlur={handleTitleBlur}
                                     className="w-full h-[162px] p-6 text-xl border border-gray-300 rounded-xl resize-none focus:outline-none focus:border-black"
-                                    placeholder="Nhập tiêu đề"
+                                    placeholder="Nhập tiêu đề (ít nhất 10 ký tự)"
                                     disabled={loading}
                                 />
                                 <div className="absolute bottom-4 right-4 text-sm text-gray-500">
                                     {title.length}/{maxLength}
                                 </div>
+                                {title.trim().length > 0 && title.trim().length < minLength && (
+                                    <div className="absolute -bottom-6 left-0 text-sm text-red-500">
+                                        Tiêu đề phải có ít nhất {minLength} ký tự
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -103,11 +110,12 @@ export default function TitlePage() {
                         </button>
                         <button 
                             onClick={handleNext}
-                            className={`px-6 py-3 rounded-lg font-medium ${title.trim().length > 0
+                            className={`px-6 py-3 rounded-lg font-medium ${
+                                title.trim().length >= minLength
                                     ? 'bg-black text-white hover:bg-[#222222]' 
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
-                            disabled={title.trim().length === 0 || loading}
+                            disabled={title.trim().length < minLength || loading}
                         >
                             Tiếp theo
                         </button>

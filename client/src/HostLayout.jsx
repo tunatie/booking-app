@@ -32,24 +32,9 @@ export default function HostLayout() {
     }
 
     // Kiểm tra nếu đang trong quá trình tạo phòng mới
-    const isCreatingNewPlace = location.pathname.includes("/account/hosting/new") || 
-                             location.pathname.includes("/overview") ||
-                             location.pathname.includes("/structure") ||
-                             location.pathname.includes("/privacy-type") ||
-                             location.pathname.includes("/location") ||
-                             location.pathname.includes("/floor-plan") ||
-                             location.pathname.includes("/stand-out") ||
-                             location.pathname.includes("/amenities") ||
-                             location.pathname.includes("/photos") ||
-                             location.pathname.includes("/title") ||
-                             location.pathname.includes("/description") ||
-                             location.pathname.includes("/finish") ||
-                             location.pathname.includes("/booking-settings") ||
-                             location.pathname.includes("/guest-type") ||
-                             location.pathname.includes("/price") ||
-                             location.pathname.includes("/discount") ||
-                             location.pathname.includes("/security") ||
-                             location.pathname.includes("/receipt");
+    const isCreatingNewPlace = location.pathname.includes('/account/hosting/') && 
+        !location.pathname.includes('/account/hosting/listings') && 
+        !location.pathname.includes('/account/hosting/reservations');
 
     return (
         <ProgressContext.Provider value={{ progress, setProgress }}>

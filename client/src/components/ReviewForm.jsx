@@ -16,7 +16,7 @@ export default function ReviewForm({ placeId }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`/api/places/${placeId}/reviews`, formData, {
+            const response = await axios.post(`/places/${placeId}/reviews`, formData, {
                 withCredentials: true
             });
             if (response.status === 201) {

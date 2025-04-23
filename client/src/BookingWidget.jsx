@@ -1,6 +1,6 @@
 import {useContext, useEffect, useState} from "react";
 import {differenceInCalendarDays} from "date-fns";
-import axios from "axios";
+import axios from './utils/axios';
 import {Navigate} from "react-router-dom";
 import {UserContext} from "./UserContext.jsx";
 import DatePicker, { registerLocale } from "react-datepicker";
@@ -51,9 +51,10 @@ const calendarStyles = `
   }
 `;
 
-axios.defaults.baseURL = 'http://localhost:4000';
-
 export default function BookingWidget({place}) {
+  // Thêm log để debug
+  console.log('Place data in BookingWidget:', place);
+  
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [numberOfGuests, setNumberOfGuests] = useState(1);
@@ -61,6 +62,8 @@ export default function BookingWidget({place}) {
   const [phone, setPhone] = useState('');
   const [redirect, setRedirect] = useState('');
   const {user} = useContext(UserContext);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [error, setError] = useState(null);
 
   // Thêm style vào document khi component mount
   useEffect(() => {
@@ -81,20 +84,140 @@ export default function BookingWidget({place}) {
     numberOfNights = differenceInCalendarDays(new Date(checkOut), new Date(checkIn));
   }
 
-  const total = numberOfNights * place.price;
+  // Kiểm tra xem có giá không
+  const hasPrice = place?.price && place.price > 0;
+  const basePrice = hasPrice ? parseInt(place.price) : 0;
+  const total = numberOfNights * basePrice;
   const serviceFee = Math.floor(total * 0.12);
-  const cleaningFee = Math.floor(place.price * 0.1);
+  const cleaningFee = Math.floor(basePrice * 0.1);
   const finalTotal = total + serviceFee + cleaningFee;
 
-  async function bookThisPlace() {
-    const response = await axios.post('/bookings', {
-      checkIn, checkOut, numberOfGuests, name, phone,
-      place: place._id,
-      price: finalTotal,
-    });
-    const bookingId = response.data._id;
-    setRedirect(`/account/bookings/${bookingId}`);
-  }
+  // Format số tiền theo VND
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+
+  const bookThisPlace = async () => {
+    try {
+      setBookingInProgress(true);
+      setError(null);
+
+      // Kiểm tra đăng nhập
+      if (!user) {
+        setError('Vui lòng đăng nhập để đặt phòng');
+        return;
+      }
+
+      // Debug user info
+      console.log('Current user:', user);
+
+      // Kiểm tra thông tin cơ bản
+      if (!name || !phone) {
+        setError('Vui lòng điền đầy đủ họ tên và số điện thoại');
+        return;
+      }
+
+      // Kiểm tra ngày
+      if (!checkIn || !checkOut) {
+        setError('Vui lòng chọn ngày nhận phòng và trả phòng');
+        return;
+      }
+
+      // Kiểm tra ngày hợp lệ
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Debug dates
+      console.log('Date validation:', {
+        checkIn,
+        checkOut,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        today: today.toISOString(),
+        isCheckInValid: checkInDate >= today,
+        isCheckOutValid: checkOutDate > checkInDate
+      });
+
+      if (checkInDate < today) {
+        setError('Ngày nhận phòng không thể là ngày trong quá khứ');
+        return;
+      }
+
+      if (checkOutDate <= checkInDate) {
+        setError('Ngày trả phòng phải sau ngày nhận phòng');
+        return;
+      }
+
+      // Kiểm tra số điện thoại
+      const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+      if (!phoneRegex.test(phone)) {
+        setError('Số điện thoại không hợp lệ');
+        return;
+      }
+
+      const bookingData = {
+        place: place._id,
+        checkIn: checkInDate.toISOString(),
+        checkOut: checkOutDate.toISOString(),
+        numberOfGuests,
+        name,
+        phone,
+        price: place.price,
+        cleaningFee,
+        serviceFee,
+        totalPrice: finalTotal
+      };
+
+      // Debug booking data
+      console.log('Preparing booking data:', {
+        ...bookingData,
+        placeDetails: {
+          id: place._id,
+          title: place.title,
+          price: place.price,
+          maxGuests: place.maxGuests
+        },
+        userDetails: {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        }
+      });
+
+      console.log('Sending booking request...');
+      const response = await axios.post('/bookings', bookingData);
+      
+      console.log('Booking response:', response);
+      
+      if (response.data) {
+        console.log('Booking successful:', response.data);
+        setRedirect(`/account/bookings/${response.data._id}`);
+      }
+    } catch (err) {
+      console.error('Detailed booking error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers,
+        stack: err.stack
+      });
+      
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.status === 401) {
+        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        setError('Không thể đặt phòng. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setBookingInProgress(false);
+    }
+  };
 
   if (redirect) {
     return <Navigate to={redirect} />
@@ -132,8 +255,14 @@ export default function BookingWidget({place}) {
   return (
     <div className="bg-white rounded-xl border p-6 sticky top-8">
       <div className="mb-4">
-        <span className="text-2xl font-semibold">${place.price}</span>
-        <span className="text-gray-500"> / đêm</span>
+        {hasPrice ? (
+          <>
+            <span className="text-2xl font-semibold">{formatPrice(basePrice)}</span>
+            <span className="text-gray-500"> / đêm</span>
+          </>
+        ) : (
+          <span className="text-gray-500">Chưa có giá</span>
+        )}
       </div>
       
       <div className="border rounded-xl">
@@ -142,7 +271,10 @@ export default function BookingWidget({place}) {
             <label className="block text-xs font-medium">NHẬN PHÒNG</label>
             <input type="date" 
               value={checkIn} 
-              onChange={ev => setCheckIn(ev.target.value)}
+              onChange={ev => {
+                console.log('CheckIn changed:', ev.target.value);
+                setCheckIn(ev.target.value);
+              }}
               className="mt-1 w-full" 
             />
           </div>
@@ -150,7 +282,10 @@ export default function BookingWidget({place}) {
             <label className="block text-xs font-medium">TRẢ PHÒNG</label>
             <input type="date" 
               value={checkOut} 
-              onChange={ev => setCheckOut(ev.target.value)}
+              onChange={ev => {
+                console.log('CheckOut changed:', ev.target.value);
+                setCheckOut(ev.target.value);
+              }}
               className="mt-1 w-full" 
             />
           </div>
@@ -159,7 +294,10 @@ export default function BookingWidget({place}) {
           <label className="block text-xs font-medium">KHÁCH</label>
           <input type="number" 
             value={numberOfGuests}
-            onChange={ev => setNumberOfGuests(ev.target.value)}
+            onChange={ev => {
+              console.log('Guests changed:', ev.target.value);
+              setNumberOfGuests(parseInt(ev.target.value) || 1);
+            }}
             min={1} 
             max={place.maxGuests}
             className="mt-1 w-full" 
@@ -170,13 +308,19 @@ export default function BookingWidget({place}) {
             <label className="block text-xs font-medium mb-2">THÔNG TIN LIÊN HỆ</label>
             <input type="text"
               value={name}
-              onChange={ev => setName(ev.target.value)}
+              onChange={ev => {
+                console.log('Name changed:', ev.target.value);
+                setName(ev.target.value);
+              }}
               placeholder="Họ tên"
               className="w-full mb-2 border rounded-lg px-2 py-1"
             />
             <input type="tel"
               value={phone}
-              onChange={ev => setPhone(ev.target.value)}
+              onChange={ev => {
+                console.log('Phone changed:', ev.target.value);
+                setPhone(ev.target.value);
+              }}
               placeholder="Số điện thoại"
               className="w-full border rounded-lg px-2 py-1"
             />
@@ -184,28 +328,48 @@ export default function BookingWidget({place}) {
         )}
       </div>
 
-      <button className="primary mt-4 w-full" onClick={bookThisPlace}>
-        {numberOfNights > 0 ? 'Đặt phòng' : 'Chọn ngày'}
+      <button 
+        onClick={() => {
+          console.log('Button clicked');
+          console.log('Button state:', {
+            hasPrice,
+            numberOfNights,
+            name,
+            phone,
+            isDisabled: !hasPrice || !numberOfNights || !name || !phone
+          });
+          bookThisPlace();
+        }}
+        className="primary mt-4 w-full"
+        disabled={!hasPrice || !numberOfNights || !name || !phone}
+      >
+        {!hasPrice ? 'Chưa có giá' : numberOfNights > 0 ? 'Đặt phòng' : 'Chọn ngày'}
       </button>
 
-      {numberOfNights > 0 && (
+      {numberOfNights > 0 && hasPrice && (
         <div className="mt-4 text-sm">
           <div className="flex justify-between py-2">
-            <span className="underline">${place.price} x {numberOfNights} đêm</span>
-            <span>${total}</span>
+            <span className="underline">{formatPrice(basePrice)} x {numberOfNights} đêm</span>
+            <span>{formatPrice(total)}</span>
           </div>
           <div className="flex justify-between py-2">
             <span className="underline">Phí dịch vụ</span>
-            <span>${serviceFee}</span>
+            <span>{formatPrice(serviceFee)}</span>
           </div>
           <div className="flex justify-between py-2">
             <span className="underline">Phí dọn dẹp</span>
-            <span>${cleaningFee}</span>
+            <span>{formatPrice(cleaningFee)}</span>
           </div>
           <div className="flex justify-between py-2 border-t mt-4 font-semibold">
             <span>Tổng tiền</span>
-            <span>${finalTotal}</span>
+            <span>{formatPrice(finalTotal)}</span>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 text-center text-red-500">
+          {error}
         </div>
       )}
 

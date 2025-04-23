@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../utils/axios";
 import { useState } from "react";
 import BookingWidget from "../BookingWidget";
 import PlaceGallery from "../PlaceGallery";
@@ -36,15 +36,23 @@ export default function PlacePage() {
             try {
                 setLoading(true);
                 const response = await axios.get(`/places/${id}`);
-            setPlace(response.data);
+                console.log('API response:', response.data);
+                
+                // Đảm bảo price là số
+                const placeData = {
+                    ...response.data,
+                    price: response.data.price ? Number(response.data.price) : 0
+                };
+                console.log('Processed place data:', placeData);
+                setPlace(placeData);
                 
                 // Check if user has liked this place
                 const likedPlaces = JSON.parse(localStorage.getItem('likedPlaces') || '[]');
                 setIsLiked(likedPlaces.includes(id));
                 
             } catch (err) {
+                console.error('Error fetching place data:', err);
                 setError(err.message);
-                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
             }

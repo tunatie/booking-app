@@ -1,32 +1,56 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-// Set default config
-axios.defaults.baseURL = 'http://localhost:4000';
-axios.defaults.withCredentials = true;
+const instance = axios.create({
+    baseURL: 'http://localhost:4001/api',
+    withCredentials: true
+});
 
-// Add request interceptor
-axios.interceptors.request.use(
+// Add request interceptor for debugging and token
+instance.interceptors.request.use(
     (config) => {
-        // Do something before request is sent
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        console.log('API Request:', {
+            url: config.url,
+            method: config.method,
+            headers: config.headers,
+            data: config.data
+        });
         return config;
     },
     (error) => {
-        // Do something with request error
+        console.error('API Request Error:', error);
         return Promise.reject(error);
     }
 );
 
-// Add response interceptor
-axios.interceptors.response.use(
+// Add response interceptor for debugging and token handling
+instance.interceptors.response.use(
     (response) => {
-        // Any status code that lie within the range of 2xx cause this function to trigger
+        console.log('API Response:', {
+            status: response.status,
+            data: response.data
+        });
         return response;
     },
     (error) => {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        console.error('API Error:', error);
+        console.error('API Response Error:', error);
+        // Handle 401 Unauthorized
+        if (error.response?.status === 401) {
+            const currentPath = window.location.pathname;
+            // Only remove token and redirect if not already on login/register page
+            if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+        }
         return Promise.reject(error);
     }
 );
 
-export default axios; 
+export default instance; 

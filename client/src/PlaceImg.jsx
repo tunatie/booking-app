@@ -1,3 +1,5 @@
+import { API_BASE_URL } from './config'; // Import the base URL
+
 export default function PlaceImg({place, index=0, className=null}) {
     // Check if place exists and has photos
     if (!place || !place.photos || place.photos.length === 0) {
@@ -22,7 +24,7 @@ export default function PlaceImg({place, index=0, className=null}) {
     return (
         <img 
             className={className} 
-            src={'http://localhost:4000/uploads/' + place.photos[index]} 
+            src={`${API_BASE_URL}/uploads/${place.photos[index]}`} 
             alt={place.title || "Place image"}
             onError={(e) => {
                 e.target.onerror = null;

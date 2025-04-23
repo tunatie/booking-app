@@ -1,5 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "./utils/axios";
+import { API_BASE_URL } from './config';
 
 export default function PhotosUploader({addedPhotos, onChange}) {
     const [photoLink, setPhotoLink] = useState('');   
@@ -45,7 +46,7 @@ export default function PhotosUploader({addedPhotos, onChange}) {
                                 <div className="h-32 flex relative" key={link + '-' + index}> 
                                     <img 
                                         className="rounded-2xl w-full object-cover" 
-                                        src={'http://localhost:4000/uploads/' + link} 
+                                        src={`${API_BASE_URL}/uploads/${link}`} 
                                         alt=""
                                     />
                                <button onClick={e => removePhoto(e,link)}className="cursor-pointer absolute bottom-1 right-1 text-white bg-black bg-opacity-50 rounded-2xl py-2 px-3">

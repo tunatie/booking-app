@@ -1,40 +1,58 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getNextPage, getPreviousPage } from "../utils/pageOrder";
-import axios from "axios";
+import axios from "../utils/axios";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import HeaderActions from "../components/HeaderActions";
+import { useForm } from "../contexts/FormContext";
+import { API_BASE_URL } from '../config';
+import { getPreviousRoute, getNextRoute, getFallbackRoute } from '../utils/navigation';
 
 export default function PhotosPage() {
     const navigate = useNavigate();
-    const [addedPhotos, setAddedPhotos] = useState([]);
+    const { formData, updateFormData } = useForm();
+    const [addedPhotos, setAddedPhotos] = useState(formData.photos || []);
     const [loading, setLoading] = useState(true);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showMenu, setShowMenu] = useState(null);
 
     // Load existing photos when component mounts
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data').then(({data}) => {
-            if (data?.photos) {
-                setAddedPhotos(data.photos);
+        const loadPhotos = async () => {
+            try {
+                setLoading(true);
+                const { data } = await axios.get('/places-form-data');
+                if (!data) {
+                    alert('Không tìm thấy dữ liệu. Vui lòng thử lại.');
+                    navigate(getFallbackRoute('photos'), { replace: true });
+                    return;
+                }
+                if (data?.photos) {
+                    setAddedPhotos(data.photos);
+                }
+            } catch (err) {
+                console.error("Error loading initial photos:", err);
+                alert('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại.');
+            } finally {
+                setLoading(false);
             }
-             setLoading(false);
-        }).catch(err => {
-            console.error("Error loading initial photos:", err);
-            setLoading(false);
-        });
+        };
+        loadPhotos();
     }, []);
 
-    // Hàm helper để lưu ảnh lên server
-    const savePhotosToServer = async (photosToSave) => {
-        try {
-            await axios.put('/places-form-data', { photos: photosToSave });
-        } catch (error) {
-            console.error('Error saving photos to server:', error);
-            // Có thể thêm thông báo lỗi cho người dùng ở đây
-        }
-    };
+    // Update form context when photos change
+    useEffect(() => {
+        const updatePhotos = async () => {
+            if (!loading) {
+                try {
+                    await axios.put('/places-form-data', { photos: addedPhotos });
+                    updateFormData('photos', addedPhotos);
+                } catch (error) {
+                    console.error('Error saving photos:', error);
+                }
+            }
+        };
+        updatePhotos();
+    }, [addedPhotos, loading]);
 
     // Add click outside handler to close menu
     useEffect(() => {
@@ -49,8 +67,8 @@ export default function PhotosPage() {
 
     async function uploadPhoto(e) {
         const files = e.target.files;
-        if (!files || files.length === 0) return; // Handle no files selected
-        setLoading(true); // Bắt đầu loading
+        if (!files || files.length === 0) return;
+        setLoading(true);
         const data = new FormData();
         for (let i = 0; i < files.length; i++) {
             data.append('photos', files[i]);
@@ -60,26 +78,20 @@ export default function PhotosPage() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             if (filenames && filenames.length > 0) {
-                 const newPhotos = [...addedPhotos, ...filenames];
-                 setAddedPhotos(newPhotos);
-                 await savePhotosToServer(newPhotos); // Lưu ngay
-            } else {
-                console.error('Upload completed but no filenames received.');
-                // Handle error: show message to user?
+                setAddedPhotos(prev => [...prev, ...filenames]);
             }
         } catch (err) {
-             console.error('Error uploading photos:', err);
-             // Handle error: show message to user?
+            console.error('Error uploading photos:', err);
+            alert('Có lỗi xảy ra khi tải ảnh lên. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+            setShowUploadModal(false);
         }
-        setLoading(false); // Kết thúc loading
-        setShowUploadModal(false);
     }
 
     function removePhoto(filename) {
-        const newPhotos = addedPhotos.filter(photo => photo !== filename);
-        setAddedPhotos(newPhotos);
-        savePhotosToServer(newPhotos); // Lưu ngay (kể cả khi rỗng)
-        setShowMenu(null); // Đóng menu sau khi xóa
+        setAddedPhotos(prev => prev.filter(photo => photo !== filename));
+        setShowMenu(null);
     }
 
     function handleDragEnd(result) {
@@ -90,62 +102,76 @@ export default function PhotosPage() {
         items.splice(result.destination.index, 0, reorderedItem);
         
         setAddedPhotos(items);
-        savePhotosToServer(items); // Lưu ngay
     }
 
     function movePhotoToFront(index) {
-        const items = Array.from(addedPhotos);
-        const [movedItem] = items.splice(index, 1);
-        items.unshift(movedItem);
-        setAddedPhotos(items);
-        savePhotosToServer(items); // Lưu ngay
+        setAddedPhotos(prev => {
+            const items = Array.from(prev);
+            const [movedItem] = items.splice(index, 1);
+            items.unshift(movedItem);
+            return items;
+        });
         setShowMenu(null);
     }
 
     function movePhotoToBack(index) {
-        const items = Array.from(addedPhotos);
-        const [movedItem] = items.splice(index, 1);
-        items.push(movedItem);
-        setAddedPhotos(items);
-        savePhotosToServer(items); // Lưu ngay
+        setAddedPhotos(prev => {
+            const items = Array.from(prev);
+            const [movedItem] = items.splice(index, 1);
+            items.push(movedItem);
+            return items;
+        });
         setShowMenu(null);
     }
 
     function movePhotoForward(index) {
-        if (index <= 0) return; 
-        const items = Array.from(addedPhotos);
-        const temp = items[index - 1];
-        items[index - 1] = items[index];
-        items[index] = temp;
-        setAddedPhotos(items);
-        savePhotosToServer(items); // Lưu ngay
+        if (index <= 0) return;
+        setAddedPhotos(prev => {
+            const items = Array.from(prev);
+            const temp = items[index - 1];
+            items[index - 1] = items[index];
+            items[index] = temp;
+            return items;
+        });
         setShowMenu(null);
     }
 
     function movePhotoBackward(index) {
-        if (index >= addedPhotos.length - 1) return; 
-        const items = Array.from(addedPhotos);
-        const temp = items[index + 1];
-        items[index + 1] = items[index];
-        items[index] = temp;
-        setAddedPhotos(items);
-        savePhotosToServer(items); // Lưu ngay
+        if (index >= addedPhotos.length - 1) return;
+        setAddedPhotos(prev => {
+            const items = Array.from(prev);
+            const temp = items[index + 1];
+            items[index + 1] = items[index];
+            items[index] = temp;
+            return items;
+        });
         setShowMenu(null);
     }
 
-    function handleNext() {
-        const nextPage = getNextPage('photos');
-        if (nextPage) {
-            navigate(`/account/hosting/${nextPage}`);
+    const handleBack = () => {
+        const prevRoute = getPreviousRoute('photos');
+        if (prevRoute) {
+            navigate(prevRoute, { replace: true });
         }
-    }
+    };
 
-    function handleBack() {
-        const prevPage = getPreviousPage('photos');
-        if (prevPage) {
-            navigate(`/account/hosting/${prevPage}`);
+    const handleNext = async () => {
+        if (addedPhotos.length < 5) {
+            alert('Bạn cần tải lên ít nhất 5 ảnh để tiếp tục.');
+            return;
         }
-    }
+
+        try {
+            await axios.put('/places-form-data', { photos: addedPhotos });
+            const nextRoute = getNextRoute('photos');
+            if (nextRoute) {
+                navigate(nextRoute, { replace: true });
+            }
+        } catch (error) {
+            console.error("Error saving photos:", error);
+            alert("Có lỗi xảy ra khi lưu ảnh. Vui lòng thử lại.");
+        }
+    };
 
     if (loading) {
         return (
@@ -233,7 +259,7 @@ export default function PhotosPage() {
                                                                 } ${snapshot.isDragging ? 'z-50' : ''}`}
                                                             >
                                                                 <img
-                                                                    src={'http://localhost:4000/uploads/' + link}
+                                                                    src={`${API_BASE_URL}/uploads/${link}`}
                                                                     alt=""
                                                                     className="rounded-xl w-full h-full object-cover"
                                                                 />
@@ -281,10 +307,7 @@ export default function PhotosPage() {
                                                                             </>
                                                                         )}
                                                                         <button 
-                                                                            onClick={() => {
-                                                                                removePhoto(link);
-                                                                                setShowMenu(null);
-                                                                            }}
+                                                                            onClick={() => removePhoto(link)}
                                                                             className="w-full px-4 py-2 text-left text-sm bg-white hover:bg-gray-100"
                                                                         >
                                                                             Xóa
@@ -303,6 +326,7 @@ export default function PhotosPage() {
                                                     </Draggable>
                                                 ))}
                                                 {provided.placeholder}
+                                                
                                                 <button 
                                                     onClick={() => setShowUploadModal(true)}
                                                     className="aspect-square bg-white border border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
@@ -423,4 +447,4 @@ export default function PhotosPage() {
             )}
         </div>
     );
-} 
+}

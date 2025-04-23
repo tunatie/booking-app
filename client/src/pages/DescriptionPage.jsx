@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from '../utils/axios';
 import { getNextPage, getPreviousPage } from "../utils/pageOrder";
 import HeaderActions from "../components/HeaderActions";
+import { useForm } from "../contexts/FormContext";
 
 export default function DescriptionPage() {
     const navigate = useNavigate();
+    const { formData, updateFormData } = useForm();
     const [selectedFeatures, setSelectedFeatures] = useState([]);
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(true);
@@ -14,39 +16,14 @@ export default function DescriptionPage() {
     const MAX_SELECTIONS = 2;
     const MAX_CHARS = 500;
 
+    // Load data from FormContext once
     useEffect(() => {
-        setLoading(true);
-        axios.get('/places-form-data')
-            .then(({ data }) => {
-                setSelectedFeatures(data?.standOut || []);
-                setDescription(data?.description || "");
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Error loading initial description data:", err);
-                setLoading(false);
-            });
-    }, []);
-
-    useEffect(() => {
-        if (!loading) {
-            const handler = setTimeout(() => {
-                axios.put('/places-form-data', { standOut: selectedFeatures })
-                    .catch(err => console.error("Error updating features (standOut):", err));
-            }, 500);
-            return () => clearTimeout(handler);
+        if (formData) {
+            setSelectedFeatures(formData.standOut || []);
+            setDescription(formData.description || "");
         }
-    }, [selectedFeatures, loading]);
-
-    useEffect(() => {
-        if (!loading && showTextInput) {
-            const handler = setTimeout(() => {
-                axios.put('/places-form-data', { description: description })
-                    .catch(err => console.error("Error updating description:", err));
-            }, 500);
-            return () => clearTimeout(handler);
-        }
-    }, [description, loading, showTextInput]);
+        setLoading(false);
+    }, [formData]);
 
     function handleNext() {
         if (showTextInput) {
@@ -54,29 +31,48 @@ export default function DescriptionPage() {
                 alert('Vui lòng nhập mô tả');
                 return;
             }
+            // Save description before navigating
+            updateFormData('description', description);
             const nextPage = getNextPage('description');
             if (nextPage) {
                 navigate(`/account/hosting/${nextPage}`);
             }
         } else {
-            axios.put('/places-form-data', { standOut: selectedFeatures })
-                .then(() => setShowTextInput(true))
-                .catch(err => console.error("Error final update features:", err));
+            // Save features before showing text input
+            updateFormData('standOut', selectedFeatures);
+            setShowTextInput(true);
         }
     }
 
     function handleBack() {
         if (showTextInput) {
-            axios.put('/places-form-data', { description: description })
-                .then(() => setShowTextInput(false))
-                .catch(err => console.error("Error final update description:", err));
+            // Save description before going back
+            updateFormData('description', description);
+            setShowTextInput(false);
         } else {
+            // Save features before navigating
+            updateFormData('standOut', selectedFeatures);
             const prevPage = getPreviousPage('description');
             if (prevPage) {
                 navigate(`/account/hosting/${prevPage}`);
             }
         }
     }
+
+    const handleDescriptionBlur = () => {
+        updateFormData('description', description);
+    };
+
+    const handleFeaturesChange = (featureId) => {
+        const newFeatures = selectedFeatures.includes(featureId)
+            ? selectedFeatures.filter(id => id !== featureId)
+            : selectedFeatures.length < MAX_SELECTIONS
+                ? [...selectedFeatures, featureId]
+                : [...selectedFeatures.slice(1), featureId];
+                
+        setSelectedFeatures(newFeatures);
+        updateFormData('standOut', newFeatures);
+    };
 
     const features = [
         { id: 'peaceful', icon: '🏠', label: 'Yên bình' },
@@ -86,19 +82,6 @@ export default function DescriptionPage() {
         { id: 'central', icon: '🎯', label: 'Vị trí trung tâm' },
         { id: 'spacious', icon: '🌳', label: 'Rộng rãi' }
     ];
-
-    const toggleFeature = (featureId) => {
-        setSelectedFeatures(prev => {
-            if (prev.includes(featureId)) {
-                return prev.filter(id => id !== featureId);
-            } else if (prev.length < MAX_SELECTIONS) {
-                return [...prev, featureId];
-            } else {
-                const [, ...rest] = prev;
-                return [...rest, featureId];
-            }
-        });
-    };
 
     if (loading) {
         return (
@@ -131,6 +114,7 @@ export default function DescriptionPage() {
                                         setDescription(text);
                                     }
                                 }}
+                                onBlur={handleDescriptionBlur}
                                 className="w-full h-[240px] p-6 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:border-black"
                                 placeholder="Bạn có thể chia sẻ về những điểm đặc biệt của không gian, khu vực lân cận, hoặc phong cách trang trí của bạn..."
                                 disabled={loading}
@@ -186,7 +170,7 @@ export default function DescriptionPage() {
                             return (
                                 <button
                                     key={feature.id}
-                                    onClick={() => toggleFeature(feature.id)}
+                                    onClick={() => handleFeaturesChange(feature.id)}
                                     className={`flex items-center gap-3 p-6 border rounded-2xl text-left transition-all h-[72px] ${
                                         isSelected 
                                             ? 'border-black bg-white hover:bg-gray-50' 

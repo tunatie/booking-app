@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from 'axios';
+import axios from '../utils/axios';
 import { useProgress } from "../HostLayout";
 import HeaderActions from "../components/HeaderActions";
 import { getNextPage, getPreviousPage, getPageProgress } from "../utils/pageOrder";

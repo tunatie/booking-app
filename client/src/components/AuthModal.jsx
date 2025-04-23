@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { UserContext } from '../UserContext';
 
 export default function AuthModal({ isOpen, onClose }) {
@@ -25,31 +25,37 @@ export default function AuthModal({ isOpen, onClose }) {
     try {
       if (isRegistering) {
         // Xử lý đăng ký
-        const response = await axios.post('/register', {
+        const response = await axios.post('/auth/register', {
           name,
           email,
           password
         });
         if (response.data) {
           // Sau khi đăng ký thành công, tự động đăng nhập
-          const loginResponse = await axios.post('/login', {
+          const loginResponse = await axios.post('/auth/login', {
             email,
             password
           });
           if (loginResponse.data) {
             setUser(loginResponse.data);
+            if (loginResponse.data.token) {
+              localStorage.setItem('token', loginResponse.data.token);
+            }
             onClose();
           }
         }
       } else {
         // Xử lý đăng nhập
         try {
-          const response = await axios.post('/login', {
+          const response = await axios.post('/auth/login', {
             email,
             password
           });
           if (response.data) {
             setUser(response.data);
+            if (response.data.token) {
+              localStorage.setItem('token', response.data.token);
+            }
             onClose();
           }
         } catch (err) {

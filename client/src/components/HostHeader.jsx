@@ -61,7 +61,7 @@ export default function HostHeader() {
                             
                             {showMenu && (
                                 <div className="absolute left-0 mt-2 py-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-                                    <Link to="/account/hosting" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                                    <Link to="/account/hosting/reservations" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
                                         Đặt phòng
                                     </Link>
                                     <Link to="/account/hosting/insights" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
@@ -70,7 +70,7 @@ export default function HostHeader() {
                                     <Link to="/account/hosting/super-host" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
                                         Thông tin phân tích
                                     </Link>
-                                    <Link to="/account/hosting/settings" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                                    <Link to="/account/hosting/overview" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
                                         Tạo mục cho thuê mới
                                     </Link>
                                     <div className="border-t border-gray-300"></div>
