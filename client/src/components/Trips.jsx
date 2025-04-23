@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { Link, useNavigate } from 'react-router-dom';
+=======
+import { Link } from 'react-router-dom';
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 import axios from '../utils/axios';
 import UserBookingDetailsModal from './UserBookingDetailsModal';
 import { vi } from 'date-fns/locale';
@@ -14,6 +18,7 @@ const Trips = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+<<<<<<< HEAD
   const { user, ready } = useUser();
   const navigate = useNavigate();
 
@@ -33,6 +38,13 @@ const Trips = () => {
       loadTrips();
     }
   }, [ready, user, activeTab]);
+=======
+  const { user } = useUser();
+
+  useEffect(() => {
+    loadTrips();
+  }, [activeTab]);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -69,6 +81,7 @@ const Trips = () => {
   };
 
   const loadTrips = async () => {
+<<<<<<< HEAD
     setLoading(true);
     setError(null);
     try {
@@ -106,6 +119,57 @@ const Trips = () => {
       }
     } finally {
       setLoading(false);
+=======
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!user) {
+        setError('Vui lòng đăng nhập để xem đặt phòng');
+        window.location.href = '/login';
+        return;
+      }
+
+      // Map UI status to API status
+      const statusMap = {
+        'pending_host': 'pending',
+        'pending_payment': 'awaiting_payment',
+        'confirmed': 'confirmed',
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+      };
+
+      const apiStatus = statusMap[activeTab] || 'pending';
+      console.log('Fetching bookings with status:', apiStatus);
+      
+      // Make sure we're using the correct API endpoint format
+      const response = await axios.get(`/bookings/user/${user._id}`, {
+        params: {
+          status: apiStatus
+        }
+      });
+      
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
+      console.log('Received bookings:', response.data);
+      setTrips(response.data);
+    } catch (err) {
+      console.error('Error loading trips:', err);
+      if (err.response?.status === 401) {
+        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        window.location.href = '/login';
+      } else if (err.response?.status === 403) {
+        setError('Bạn không có quyền xem đặt phòng này');
+      } else if (err.response?.status === 404) {
+        setTrips([]); // Set empty array for no bookings found
+      } else {
+        setError('Không thể tải danh sách đặt phòng. Vui lòng thử lại sau.');
+      }
+    } finally {
+    setLoading(false);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     }
   };
 
@@ -157,6 +221,7 @@ const Trips = () => {
       </div>
     );
   }
+<<<<<<< HEAD
 
   return (
     <div className="min-h-screen bg-white">
@@ -165,6 +230,16 @@ const Trips = () => {
           <h1 className="text-2xl font-semibold py-6">Chuyến đi của bạn</h1>
 
           {/* Tabs */}
+=======
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="border-b bg-white">
+        <div className="max-w-screen-xl mx-auto px-4">
+          <h1 className="text-2xl font-semibold py-6">Chuyến đi của bạn</h1>
+
+      {/* Tabs */}
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
           <div className="flex gap-8 -mb-px overflow-x-auto scrollbar-hide">
             <button
               className={`py-4 px-6 whitespace-nowrap transition-all ${
@@ -181,7 +256,10 @@ const Trips = () => {
                 </span>
               )}
             </button>
+<<<<<<< HEAD
             
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             <button
               className={`py-4 px-6 whitespace-nowrap transition-all ${
                 activeTab === 'pending_payment'
@@ -192,8 +270,12 @@ const Trips = () => {
             >
               Chờ thanh toán
             </button>
+<<<<<<< HEAD
 
             <button
+=======
+        <button
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
               className={`py-4 px-6 whitespace-nowrap transition-all ${
                 activeTab === 'confirmed'
                   ? 'border-b-2 border-black text-black font-medium'
@@ -202,9 +284,14 @@ const Trips = () => {
               onClick={() => setActiveTab('confirmed')}
             >
               Đã xác nhận
+<<<<<<< HEAD
             </button>
 
             <button
+=======
+        </button>
+        <button
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
               className={`py-4 px-6 whitespace-nowrap transition-all ${
                 activeTab === 'completed'
                   ? 'border-b-2 border-black text-black font-medium'
@@ -213,18 +300,29 @@ const Trips = () => {
               onClick={() => setActiveTab('completed')}
             >
               Đã hoàn thành
+<<<<<<< HEAD
             </button>
 
             <button
+=======
+        </button>
+        <button
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
               className={`py-4 px-6 whitespace-nowrap transition-all ${
                 activeTab === 'cancelled'
                   ? 'border-b-2 border-black text-black font-medium'
                   : 'text-gray-500 hover:text-black hover:border-b-2 hover:border-gray-200'
               } bg-white`}
               onClick={() => setActiveTab('cancelled')}
+<<<<<<< HEAD
             >
               Đã hủy
             </button>
+=======
+        >
+          Đã hủy
+        </button>
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
           </div>
         </div>
       </div>
@@ -240,9 +338,15 @@ const Trips = () => {
             >
               Bắt đầu tìm kiếm
             </Link>
+<<<<<<< HEAD
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+=======
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             {filteredTrips.map((booking) => (
               <div
                 key={booking._id}
@@ -264,7 +368,11 @@ const Trips = () => {
                     })}
                   </div>
                 </div>
+<<<<<<< HEAD
                 <div className="p-4">
+=======
+              <div className="p-4">
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <h3 className="font-medium text-lg line-clamp-1">{booking.place?.title}</h3>
                   </div>
@@ -290,10 +398,17 @@ const Trips = () => {
                     </button>
                   </div>
                 </div>
+<<<<<<< HEAD
               </div>
             ))}
           </div>
         )}
+=======
+            </div>
+          ))}
+        </div>
+      )}
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
       </div>
 
       {/* Booking Details Modal */}

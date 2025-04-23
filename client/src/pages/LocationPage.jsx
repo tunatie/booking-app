@@ -34,7 +34,11 @@ function LocationMarker({ position, setPosition }) {
 export default function LocationPage() {
     const navigate = useNavigate();
     const location = useLocation();
+<<<<<<< HEAD
     const { formData, updateFormData, loadFormData, initialized } = useForm();
+=======
+    const { formData, updateFormData } = useForm();
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     const [loading, setLoading] = useState(true);
     const [isInputFocused, setIsInputFocused] = useState(false);
     const dropdownRef = useRef(null);
@@ -43,6 +47,7 @@ export default function LocationPage() {
     const [address, setAddress] = useState(formData.address || "");
     const [selectedLocation, setSelectedLocation] = useState(formData.location || null);
 
+<<<<<<< HEAD
     // Load form data only once when component mounts
     useEffect(() => {
         const initializeForm = async () => {
@@ -74,6 +79,43 @@ export default function LocationPage() {
         };
         updateForm();
     }, [address, selectedLocation, initialized]);
+=======
+    // Load existing data when component mounts
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                const { data } = await axios.get('/places-form-data');
+                if (!data) {
+                    alert('Không tìm thấy dữ liệu. Vui lòng thử lại.');
+                    navigate(getFallbackRoute('location'), { replace: true });
+                    return;
+                }
+                if (data.address && data.address !== address) {
+                    setAddress(data.address);
+                }
+                if (data.location && JSON.stringify(data.location) !== JSON.stringify(selectedLocation)) {
+                    setSelectedLocation(data.location);
+                }
+            } catch (err) {
+                console.error("Error loading location data:", err);
+                alert('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
+
+    // Update form context when address or location changes
+    useEffect(() => {
+        const updateForm = async () => {
+            updateFormData('address', address);
+            updateFormData('location', selectedLocation);
+        };
+        updateForm();
+    }, [address, selectedLocation]);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
     // Xử lý click outside để đóng dropdown
     useEffect(() => {

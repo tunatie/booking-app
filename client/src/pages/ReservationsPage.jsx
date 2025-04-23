@@ -21,7 +21,11 @@ export default function ReservationsPage() {
 
     async function loadUserData() {
         try {
+<<<<<<< HEAD
             const { data } = await axios.get('/auth/profile');
+=======
+            const { data } = await axios.get('/profile');
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             setUser(data);
         } catch (err) {
             console.error('Error loading user data:', err);

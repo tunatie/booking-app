@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/payment.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
+<<<<<<< HEAD
 const { 
   testPayment, 
   checkPaymentStatus, 
@@ -10,6 +11,8 @@ const {
   handlePayOSCancel, 
   handlePayOSWebhook 
 } = require('../controllers/payosController');
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
 // Tạo thanh toán MoMo
 router.post('/momo/:bookingId', verifyToken, paymentController.createMoMoPayment);
@@ -29,6 +32,7 @@ router.get('/status/:bookingId', verifyToken, paymentController.checkPaymentStat
 // Xác nhận thanh toán thủ công (admin only)
 router.post('/verify/:bookingId', verifyToken, isAdmin, paymentController.verifyPayment);
 
+<<<<<<< HEAD
 // PayOS routes
 router.post('/test', testPayment);
 router.post('/create', createPayOSPayment);
@@ -37,4 +41,6 @@ router.get('/return', handlePayOSReturn);
 router.get('/cancel', handlePayOSCancel);
 router.post('/webhook', handlePayOSWebhook);
 
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 module.exports = router; 

@@ -38,12 +38,17 @@ import HostingPage from './pages/HostingPage'
 import ProfilePage from './pages/ProfilePage'
 import AccountSettingsPage from './pages/AccountSettingsPage'
 import PersonalInfoPage from './pages/PersonalInfoPage'
+import PaymentSettingsPage from './pages/PaymentSettingsPage'
 import ListingsPage from './pages/ListingsPage'
 import ReservationsPage from './pages/ReservationsPage'
 import PaymentCallback from './pages/PaymentCallback'
 import { ProgressProvider } from './contexts/ProgressContext'
 import { FormProvider } from './contexts/FormContext'
+<<<<<<< HEAD
 import PaymentSuccess from './pages/PaymentSuccess'
+=======
+import { Toaster } from 'react-hot-toast'
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
 function App() {
   return (
@@ -63,7 +68,13 @@ function App() {
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/host-experience" element={<HostExperience />} />
             <Route path="/become-host" element={<BecomeHost />} />
+<<<<<<< HEAD
             <Route path="/payment/success" element={<PaymentSuccess />} />
+=======
+            <Route path="/account-settings" element={<AccountSettingsPage />} />
+            <Route path="/account-settings/personal-info" element={<PersonalInfoPage />} />
+            <Route path="/account-settings/payments" element={<PaymentSettingsPage />} />
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
           </Route>
           <Route element={<HostLayout />}>
             <Route path="/account/hosting" element={<HostingPage />} />
@@ -90,11 +101,18 @@ function App() {
             <Route path="/account/hosting/celebration" element={<CelebrationPage />} />
             <Route path="/account/hosting/:id" element={<PlaceEditPage />} />
             <Route path="/users/show/:id" element={<ProfilePage />} />
+<<<<<<< HEAD
             <Route path="/account-settings" element={<AccountSettingsPage />} />
             <Route path="/account-settings/personal-info" element={<PersonalInfoPage />} />
           </Route>
           <Route path="/payment/callback" element={<PaymentCallback />} />
         </Routes>
+=======
+          </Route>
+          <Route path="/payment/callback" element={<PaymentCallback />} />
+        </Routes>
+        <Toaster />
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
       </ProgressProvider>
     </FormProvider>
   )

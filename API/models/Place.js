@@ -15,6 +15,7 @@ const PlaceSchema = new Schema({
     price: Number,
     draft: {type: Boolean, default: false},
     
+<<<<<<< HEAD
     // Form data
     formData: {
         type: mongoose.Schema.Types.Mixed,
@@ -32,6 +33,19 @@ const PlaceSchema = new Schema({
         state: String,
         postalCode: String
     },
+=======
+    // Thông tin cơ bản
+    placeType: String,          // Loại nơi ở (nhà, căn hộ, etc.)
+    propertyType: String,       // Loại bất động sản
+    privacyType: String,        // Kiểu riêng tư
+    location: {                 // Vị trí chi tiết
+        country: String,
+        street: String,
+        city: String,
+        state: String,
+        postalCode: String
+    },
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
     // Thông tin chi tiết
     floorPlan: {               // Sơ đồ

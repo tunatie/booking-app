@@ -23,9 +23,15 @@ export default function Receipt() {
             setError(null);
             
             // Log the request URL
+<<<<<<< HEAD
             console.log('Making request to:', `${API_BASE_URL}/places-form-data`);
             
             const response = await axios.get('/places-form-data');
+=======
+            console.log('Making request to:', `${API_BASE_URL}/api/places-form-data`);
+            
+            const response = await axios.get('/api/places-form-data');
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             console.log('Full API Response:', response);
             
             const { data } = response;

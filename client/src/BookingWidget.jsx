@@ -105,12 +105,16 @@ export default function BookingWidget({place}) {
       setBookingInProgress(true);
       setError(null);
 
+<<<<<<< HEAD
       // Kiểm tra đăng nhập
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
       if (!user) {
         setError('Vui lòng đăng nhập để đặt phòng');
         return;
       }
 
+<<<<<<< HEAD
       // Debug user info
       console.log('Current user:', user);
 
@@ -157,13 +161,22 @@ export default function BookingWidget({place}) {
       const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
       if (!phoneRegex.test(phone)) {
         setError('Số điện thoại không hợp lệ');
+=======
+      if (!name || !phone) {
+        setError('Vui lòng điền đầy đủ thông tin');
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         return;
       }
 
       const bookingData = {
         place: place._id,
+<<<<<<< HEAD
         checkIn: checkInDate.toISOString(),
         checkOut: checkOutDate.toISOString(),
+=======
+        checkIn,
+        checkOut,
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         numberOfGuests,
         name,
         phone,
@@ -173,6 +186,7 @@ export default function BookingWidget({place}) {
         totalPrice: finalTotal
       };
 
+<<<<<<< HEAD
       // Debug booking data
       console.log('Preparing booking data:', {
         ...bookingData,
@@ -194,11 +208,17 @@ export default function BookingWidget({place}) {
       
       console.log('Booking response:', response);
       
+=======
+      console.log('Sending booking data:', bookingData);
+      const response = await axios.post('/bookings', bookingData);
+      
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
       if (response.data) {
         console.log('Booking successful:', response.data);
         setRedirect(`/account/bookings/${response.data._id}`);
       }
     } catch (err) {
+<<<<<<< HEAD
       console.error('Detailed booking error:', {
         message: err.message,
         response: err.response?.data,
@@ -217,6 +237,13 @@ export default function BookingWidget({place}) {
     } finally {
       setBookingInProgress(false);
     }
+=======
+      console.error('Error booking place:', err);
+      setError(err.response?.data?.error || 'Không thể đặt phòng. Vui lòng thử lại sau.');
+    } finally {
+      setBookingInProgress(false);
+  }
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
   };
 
   if (redirect) {
@@ -258,7 +285,11 @@ export default function BookingWidget({place}) {
         {hasPrice ? (
           <>
             <span className="text-2xl font-semibold">{formatPrice(basePrice)}</span>
+<<<<<<< HEAD
             <span className="text-gray-500"> / đêm</span>
+=======
+        <span className="text-gray-500"> / đêm</span>
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
           </>
         ) : (
           <span className="text-gray-500">Chưa có giá</span>
@@ -294,10 +325,14 @@ export default function BookingWidget({place}) {
           <label className="block text-xs font-medium">KHÁCH</label>
           <input type="number" 
             value={numberOfGuests}
+<<<<<<< HEAD
             onChange={ev => {
               console.log('Guests changed:', ev.target.value);
               setNumberOfGuests(parseInt(ev.target.value) || 1);
             }}
+=======
+            onChange={ev => setNumberOfGuests(parseInt(ev.target.value) || 1)}
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             min={1} 
             max={place.maxGuests}
             className="mt-1 w-full" 
@@ -329,6 +364,7 @@ export default function BookingWidget({place}) {
       </div>
 
       <button 
+<<<<<<< HEAD
         onClick={() => {
           console.log('Button clicked');
           console.log('Button state:', {
@@ -340,6 +376,9 @@ export default function BookingWidget({place}) {
           });
           bookThisPlace();
         }}
+=======
+        onClick={bookThisPlace}
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         className="primary mt-4 w-full"
         disabled={!hasPrice || !numberOfNights || !name || !phone}
       >

@@ -1,13 +1,17 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+<<<<<<< HEAD
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
+<<<<<<< HEAD
     const code = searchParams.get('code');
     const message = searchParams.get('message');
     const bookingId = searchParams.get('bookingId');
@@ -68,6 +72,18 @@ export default function PaymentCallback() {
       setTimeout(() => {
         navigate(`/trips?status=pending_payment`);
       }, 3000);
+=======
+    const resultCode = searchParams.get('resultCode');
+    const message = searchParams.get('message');
+    const bookingId = searchParams.get('bookingId');
+
+    if (resultCode === '0') {
+      toast.success('Thanh toán thành công!');
+      navigate('/trips?status=confirmed');
+    } else {
+      toast.error(message || 'Thanh toán thất bại');
+      navigate(`/trips?status=pending_payment`);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     }
   }, [searchParams, navigate]);
 

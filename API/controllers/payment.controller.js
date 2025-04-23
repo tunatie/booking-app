@@ -2,9 +2,12 @@ const crypto = require('crypto');
 const https = require('https');
 const Booking = require('../models/Booking');
 const Payment = require('../models/payment.model');
+<<<<<<< HEAD
 const Transaction = require('../models/transaction.model');
 const payosService = require('../services/payos.service');
 const Place = require('../models/Place');
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
 // MoMo Config
 const MOMO_CONFIG = {
@@ -373,6 +376,7 @@ exports.verifyPayment = async (req, res) => {
         console.error('Verify payment error:', error);
         res.status(500).json({ message: 'Lỗi server' });
     }
+<<<<<<< HEAD
 };
 
 exports.createPayment = async (req, res) => {
@@ -515,4 +519,6 @@ exports.testPayment = async (req, res) => {
       error: error.response?.data || error.message 
     });
   }
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 }; 

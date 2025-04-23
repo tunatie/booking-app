@@ -48,6 +48,7 @@ const initialFormData = {
 
 export function FormProvider({ children }) {
     const [formData, setFormData] = useState(initialFormData);
+<<<<<<< HEAD
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [initialized, setInitialized] = useState(false);
@@ -74,6 +75,37 @@ export function FormProvider({ children }) {
                 localStorage.removeItem('token');
             }
             setFormData(initialFormData);
+=======
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [initialized, setInitialized] = useState(false);
+
+    // Load initial data only once when provider mounts
+    useEffect(() => {
+        if (!initialized) {
+            loadFormData();
+            setInitialized(true);
+        }
+    }, [initialized]);
+
+    const loadFormData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await axios.get('/places-form-data');
+            console.log('Loaded form data:', response.data);
+            
+            // Only update if we have actual data
+            if (response.data && Object.keys(response.data).length > 0) {
+                setFormData(prevData => ({
+                    ...prevData,
+                    ...response.data
+                }));
+            }
+        } catch (err) {
+            console.error('Error loading form data:', err);
+            setError(err.message);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         } finally {
             setLoading(false);
         }
@@ -81,6 +113,7 @@ export function FormProvider({ children }) {
 
     const updateFormData = async (section, data) => {
         try {
+<<<<<<< HEAD
             const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('Vui lòng đăng nhập để thực hiện thao tác này');
@@ -88,6 +121,9 @@ export function FormProvider({ children }) {
 
             setError(null);
             setLoading(true);
+=======
+            setError(null);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             
             // Update local state first
             setFormData(prev => {
@@ -103,19 +139,27 @@ export function FormProvider({ children }) {
                 [section]: data
             };
             
+<<<<<<< HEAD
+=======
+            console.log('Updating form data:', section, updatePayload);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             await axios.put('/places-form-data', updatePayload);
         } catch (err) {
             console.error('Error updating form data:', err);
             setError(err.message);
             // Revert local state on error
             loadFormData();
+<<<<<<< HEAD
         } finally {
             setLoading(false);
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         }
     };
 
     const resetForm = async () => {
         try {
+<<<<<<< HEAD
             const token = localStorage.getItem('token');
             if (!token) {
                 setFormData(initialFormData);
@@ -133,6 +177,21 @@ export function FormProvider({ children }) {
         }
     };
 
+=======
+            setFormData(initialFormData);
+            await axios.delete('/places-form-data');
+        } catch (err) {
+            console.error('Error resetting form:', err);
+            setError(err.message);
+        }
+    };
+
+    // Debug log whenever formData changes
+    useEffect(() => {
+        console.log('Current form data:', formData);
+    }, [formData]);
+
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     return (
         <FormContext.Provider value={{ 
             formData, 
@@ -140,8 +199,12 @@ export function FormProvider({ children }) {
             resetForm,
             loading,
             error,
+<<<<<<< HEAD
             loadFormData,
             initialized
+=======
+            loadFormData 
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         }}>
             {children}
         </FormContext.Provider>

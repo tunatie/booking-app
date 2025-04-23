@@ -3,11 +3,15 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import PlaceImg from '../PlaceImg.jsx';
 import BookingDateDisplay from './BookingDateDisplay';
+<<<<<<< HEAD
 import QRCode from 'qrcode.react';
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 import { toast } from 'react-hot-toast';
 import axios from '../utils/axios';
 import PaymentConfirmation from './PaymentConfirmation';
 
+<<<<<<< HEAD
 // Thông tin ngân hàng demo
 const BANK_INFO = {
   name: "TRAN TUAN KIET",
@@ -21,6 +25,8 @@ const copyToClipboard = (text) => {
     .catch(() => toast.error('Không thể sao chép'));
 };
 
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUpdate }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -65,6 +71,7 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
     const checkOut = new Date(booking.checkOut);
     const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
 
+<<<<<<< HEAD
     const generateTransferContent = (bookingId) => {
         return `BOOKING${bookingId}`;
     };
@@ -73,6 +80,8 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
         return `${BANK_INFO.bank}|${BANK_INFO.name}|${BANK_INFO.number}|${booking.price}|${generateTransferContent(booking._id)}`;
     };
 
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     const handleCancelBooking = async () => {
         if (!booking || !booking._id) {
             toast.error('Không tìm thấy thông tin đặt phòng.');
@@ -90,6 +99,7 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
 
         try {
             setIsDeleting(true);
+<<<<<<< HEAD
             // Use the correct endpoint
             await axios.patch(`/bookings/${booking._id}/cancel`); 
             toast.success('Đã hủy đặt phòng thành công');
@@ -98,6 +108,14 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
         } catch (error) {
             console.error('Error canceling booking:', error);
             // Provide more specific error messages
+=======
+            await axios.patch(`/bookings/${booking._id}/cancel`); 
+            toast.success('Đã hủy đặt phòng thành công');
+            onUpdate?.();
+            onClose();
+        } catch (error) {
+            console.error('Error canceling booking:', error);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             let errorMessage = 'Không thể hủy đặt phòng. Vui lòng thử lại sau.';
             if (error.response?.status === 403) {
                 errorMessage = 'Bạn không có quyền hủy đặt phòng này.';
@@ -223,6 +241,7 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
                                             </div>
                                         </div>
 
+<<<<<<< HEAD
                                         {booking.status === 'awaiting_payment' && (
                                             <div className="mt-6 space-y-4">
                                                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -264,6 +283,18 @@ export default function UserBookingDetailsModal({ booking, isOpen, onClose, onUp
                                                     </button>
                                                 </div>
                                             </div>
+=======
+                                        {/* Payment Section */}
+                                        {booking.status === 'awaiting_payment' && (
+                                            <PaymentConfirmation
+                                                booking={booking}
+                                                onPaymentSuccess={() => {
+                                                    toast.success('Đã gửi xác nhận thanh toán. Vui lòng chờ admin duyệt.');
+                                                    onUpdate?.();
+                                                    onClose();
+                                                }}
+                                            />
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
                                         )}
                                     </div>
 

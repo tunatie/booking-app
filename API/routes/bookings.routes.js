@@ -3,17 +3,29 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Booking = require('../models/Booking');
 const Place = require('../models/Place');
+<<<<<<< HEAD
 
 // Lấy JWT secret từ biến môi trường
 const jwtSecret = process.env.JWT_SECRET || 'asdasdc3dcsxsdasda';
+=======
+const User = require('../models/User');
+
+const jwtSecret = 'asdasdc3dcsxsdasda';
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
 function getUserDataFromReq(req) {
     return new Promise((resolve, reject) => {
         try {
+<<<<<<< HEAD
             // Kiểm tra token từ cả cookie và header
             const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
             if (!token) {
                 console.log('No token found');
+=======
+            const token = req.cookies?.token;
+            if (!token) {
+                console.log('No token found in cookies');
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
                 resolve(null);
                 return;
             }
@@ -42,7 +54,11 @@ router.post('/', async (req, res) => {
         }
 
         const {
+<<<<<<< HEAD
             place: placeId,
+=======
+            place,
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             checkIn,
             checkOut,
             numberOfGuests,
@@ -56,7 +72,11 @@ router.post('/', async (req, res) => {
 
         // Log request data
         console.log('Booking request data:', {
+<<<<<<< HEAD
             placeId,
+=======
+            place,
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             checkIn,
             checkOut,
             numberOfGuests,
@@ -71,7 +91,11 @@ router.post('/', async (req, res) => {
 
         // Validate required fields
         const missingFields = [];
+<<<<<<< HEAD
         if (!placeId) missingFields.push('place');
+=======
+        if (!place) missingFields.push('place');
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         if (!checkIn) missingFields.push('checkIn');
         if (!checkOut) missingFields.push('checkOut');
         if (!numberOfGuests) missingFields.push('numberOfGuests');
@@ -90,6 +114,7 @@ router.post('/', async (req, res) => {
             });
         }
 
+<<<<<<< HEAD
         // Kiểm tra place có tồn tại không
         const place = await Place.findById(placeId);
         if (!place) {
@@ -138,6 +163,13 @@ router.post('/', async (req, res) => {
             user: userData.id,
             checkIn: checkInDate,
             checkOut: checkOutDate,
+=======
+        const bookingDoc = await Booking.create({
+            place,
+            user: userData.id,
+            checkIn,
+            checkOut,
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             numberOfGuests,
             name,
             phone,
@@ -163,14 +195,25 @@ router.post('/', async (req, res) => {
 // Get bookings (for both users and hosts)
 router.get('/', async (req, res) => {
     try {
+<<<<<<< HEAD
         const { type, status } = req.query;
         const userData = await getUserDataFromReq(req);
         
+=======
+        const { type } = req.query;
+        const token = req.cookies?.token;
+        if (!token) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const userData = await getUserDataFromReq(req);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         if (!userData) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
         let query = {};
+<<<<<<< HEAD
         
         // Xử lý query dựa trên type (host/user)
         if (type === 'host') {
@@ -200,13 +243,29 @@ router.get('/', async (req, res) => {
         }
 
         console.log('Fetching bookings with query:', query);
+=======
+        if (type === 'host') {
+            // Get all places owned by the user
+            const userPlaces = await Place.find({ owner: userData.id });
+            const placeIds = userPlaces.map(place => place._id);
+            
+            // Find bookings for these places
+            query.place = { $in: placeIds };
+        } else {
+            // Regular user bookings
+            query.user = userData.id;
+        }
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 
         const bookings = await Booking.find(query)
             .populate('place')
             .populate('user', 'name email')
             .sort({ createdAt: -1 });
 
+<<<<<<< HEAD
         console.log('Found bookings:', bookings.length);
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         res.json(bookings);
     } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -236,10 +295,42 @@ router.get('/user/:userId', async (req, res) => {
         }
 
         const bookings = await Booking.find(query)
+<<<<<<< HEAD
             .populate('place')
             .sort({ createdAt: -1 });
 
         res.json(bookings);
+=======
+            .populate({
+                path: 'place',
+                populate: {
+                    path: 'owner',
+                    select: 'bankBin bankAccountNumber bankAccountName'
+                }
+            })
+            .sort({ createdAt: -1 });
+            
+        // Process bookings to add vietQRString if applicable
+        const processedBookings = bookings.map(booking => {
+            const bookingObj = booking.toObject();
+            if (
+                bookingObj.status === 'awaiting_payment' &&
+                bookingObj.place?.owner?.bankBin &&
+                bookingObj.place?.owner?.bankAccountNumber &&
+                bookingObj.totalPrice > 0
+            ) {
+                const owner = bookingObj.place.owner;
+                const amount = bookingObj.totalPrice;
+                const description = `Thanh toan BOOKING${bookingObj._id.toString().slice(-6)}`;
+                bookingObj.vietQRString = `${owner.bankBin}|${owner.bankAccountNumber}|print|${amount}|${description}`;
+            } else {
+                 bookingObj.vietQRString = null;
+            }
+            return bookingObj;
+        });
+
+        res.json(processedBookings);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     } catch (error) {
         console.error('Error fetching user bookings:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -265,15 +356,43 @@ router.get('/:id', async (req, res) => {
             console.log('Booking not found:', id);
             return res.status(404).json({ error: 'Booking not found' });
         }
+<<<<<<< HEAD
 
         // Kiểm tra quyền truy cập
+=======
+        
+        // Fetch owner details separately to get bank info
+        const owner = await User.findById(booking.place.owner).select('bankBin bankAccountNumber bankAccountName');
+
+        // Check access rights after fetching booking
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         if (booking.user._id.toString() !== userData.id && 
             booking.place.owner.toString() !== userData.id) {
             return res.status(403).json({ error: 'Forbidden' });
         }
 
+<<<<<<< HEAD
         console.log('Booking found:', booking);
         res.json(booking);
+=======
+        // Convert to plain object to add vietQRString
+        const bookingObj = booking.toObject();
+        bookingObj.vietQRString = null; // Initialize as null
+
+        if (
+            bookingObj.status === 'awaiting_payment' &&
+            owner?.bankBin &&
+            owner?.bankAccountNumber &&
+            bookingObj.totalPrice > 0
+        ) {
+            const amount = bookingObj.totalPrice;
+            const description = `Thanh toan BOOKING${bookingObj._id.toString().slice(-6)}`;
+            bookingObj.vietQRString = `${owner.bankBin}|${owner.bankAccountNumber}|print|${amount}|${description}`;
+        }
+
+        console.log('Booking found (with QR attempt):', bookingObj);
+        res.json(bookingObj); // Send the modified object
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     } catch (error) {
         console.error('Error fetching booking by ID:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -295,7 +414,11 @@ router.patch('/:id', async (req, res) => {
             return res.status(400).json({ error: 'Missing status in request body' });
         }
 
+<<<<<<< HEAD
         const validStatuses = ['awaiting_payment', 'cancelled'];
+=======
+        const validStatuses = ['pending', 'awaiting_payment', 'cancelled', 'confirmed', 'completed'];
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ error: 'Invalid status value' });
         }
@@ -311,12 +434,35 @@ router.patch('/:id', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden: Only the place owner can update this booking status' });
         }
 
+<<<<<<< HEAD
         // Check if the booking is in a state that allows status change (e.g., pending)
         if (booking.status !== 'pending') {
             return res.status(400).json({ error: `Cannot change status from ${booking.status}` });
         }
 
         booking.status = status;
+=======
+        // Check valid status transitions
+        const validTransitions = {
+            'pending': ['awaiting_payment', 'cancelled'],
+            'awaiting_payment': ['confirmed', 'cancelled'],
+            'confirmed': ['completed', 'cancelled'],
+            'completed': []
+        };
+
+        if (!validTransitions[booking.status]?.includes(status)) {
+            return res.status(400).json({ 
+                error: `Cannot change status from ${booking.status} to ${status}`,
+                validTransitions: validTransitions[booking.status]
+            });
+        }
+
+        booking.status = status;
+        if (status === 'awaiting_payment') {
+            // Set payment due time to 24 hours from now
+            booking.paymentDueBy = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        }
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
         await booking.save();
 
         res.json(booking);
@@ -402,6 +548,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // Confirm payment with proof
 router.patch('/:id/confirm-payment', async (req, res) => {
     try {
@@ -482,4 +629,6 @@ router.patch('/:id/confirm-payment-received', async (req, res) => {
     }
 });
 
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 module.exports = router; 

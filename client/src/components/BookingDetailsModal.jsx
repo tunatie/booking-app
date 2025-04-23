@@ -429,7 +429,10 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onConfir
                 <div className="mt-6">
                     <PaymentConfirmation 
                         booking={booking}
+<<<<<<< HEAD
                         onClose={onClose}
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
                         onPaymentSuccess={() => {
                             onClose();
                             // Reload bookings after payment

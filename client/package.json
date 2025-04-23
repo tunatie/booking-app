@@ -17,14 +17,21 @@
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "mongoose": "^8.9.2",
+<<<<<<< HEAD
     "qrcode.react": "^3.2.0",
+=======
+    "qrcode.react": "^3.1.0",
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     "react": "^18.3.1",
     "react-datepicker": "^8.2.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.5.2",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^7.1.0",
+<<<<<<< HEAD
     "socket.io-client": "^4.8.1",
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
     "vite": "^6.3.1"
   },
   "devDependencies": {

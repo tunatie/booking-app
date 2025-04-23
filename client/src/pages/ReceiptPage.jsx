@@ -47,6 +47,7 @@ export default function ReceiptPage() {
 
             // Format the data before sending
             const placeData = {
+<<<<<<< HEAD
                 formData: {
                     title: formData.title,
                     description: formData.description,
@@ -73,6 +74,25 @@ export default function ReceiptPage() {
                     },
                     standOut: formData.standOut || []
                 }
+=======
+                title: formData.title,
+                description: formData.description,
+                address: formData.address,
+                photos: formData.photos || [],
+                perks: formData.amenities || [],
+                extraInfo: '',
+                checkIn: '14:00',
+                checkOut: '12:00',
+                maxGuests: formData.floorPlan?.guests || 1,
+                price: Number(formData.price) || 0,
+                propertyType: formData.propertyType,
+                privacyType: formData.privacyType,
+                location: formData.location,
+                floorPlan: formData.floorPlan,
+                security: formData.security,
+                standOut: formData.standOut || [],
+                draft: false
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             };
 
             console.log('Formatted place data:', placeData);
@@ -93,7 +113,11 @@ export default function ReceiptPage() {
             console.error('Error publishing place:', error);
             if (error.response) {
                 console.error('Error response:', error.response.data);
+<<<<<<< HEAD
                 alert(`Đã xảy ra lỗi khi đăng phòng: ${error.response.data.error || 'Vui lòng thử lại sau'}`);
+=======
+                alert(`Đã xảy ra lỗi khi đăng phòng: ${error.response.data.message || 'Vui lòng thử lại sau'}`);
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
             } else {
                 alert('Đã xảy ra lỗi khi đăng phòng. Vui lòng thử lại sau.');
             }

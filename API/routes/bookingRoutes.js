@@ -148,9 +148,12 @@ router.get('/places/:id', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // Basic booking routes
 router.get('/', (req, res) => {
   res.json({ message: 'Get all bookings' });
 });
 
+=======
+>>>>>>> 12d658f551c09d2071399818f257e90056fa6fbd
 module.exports = router;
